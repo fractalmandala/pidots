@@ -1,0 +1,14 @@
+<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="favicon" clip-path="url(#clip0_660_129)">
+<path id="vector" d="M0 12C0 5.37258 5.37258 0 12 0H52C58.6274 0 64 5.37258 64 12V52C64 58.6274 58.6274 64 52 64H12C5.37258 64 0 58.6274 0 52V12Z" fill="white"/>
+<path id="Vector" d="M15 33C15 20 22 11 32 11C42 11 49 20 49 33V42C49 52.5 49 52.5 32 52.5C15 52.5 15 52.5 15 42V33Z" fill="#17D730"/>
+<path id="Vector_2" d="M25 35C26.6569 35 28 32.7614 28 30C28 27.2386 26.6569 25 25 25C23.3431 25 22 27.2386 22 30C22 32.7614 23.3431 35 25 35Z" fill="white"/>
+<path id="Vector_3" d="M39 35C40.6569 35 42 32.7614 42 30C42 27.2386 40.6569 25 39 25C37.3431 25 36 27.2386 36 30C36 32.7614 37.3431 35 39 35Z" fill="white"/>
+<path id="Vector_4" d="M28 41C30.6667 43 33.3333 43 36 41" stroke-width="2" stroke-linecap="round" stroke="white"/>
+</g>
+<defs>
+<clipPath id="clip0_660_129">
+<rect width="64" height="64" fill="white"/>
+</clipPath>
+</defs>
+</svg>

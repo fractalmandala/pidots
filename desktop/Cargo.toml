@@ -1,0 +1,33 @@
+[package]
+name = "pidots-desktop"
+description = "Native macOS shell for Pidots, built with GPUI Kit and a Wry WebView."
+version = "0.1.3"
+edition = "2024"
+publish = false
+license = "MIT"
+
+[[bin]]
+name = "pidots"
+path = "src/main.rs"
+
+[features]
+# Enables the WebKit inspector in release builds (right click → Inspect Element).
+inspector = ["gpui-wry/inspector"]
+
+[dependencies]
+anyhow = "1"
+gpui-kit = "0.7.1"
+gpui-wry = "0.7.1"
+wry = { version = "0.53.3", package = "lb-wry" }
+raw-window-handle = "0.6"
+
+[profile.release]
+lto = "thin"
+codegen-units = 4
+strip = true
+
+[profile.dev.package]
+gpui-pre = { opt-level = 3 }
+gpui-component = { opt-level = 3 }
+gpui-kit = { opt-level = 3 }
+taffy = { opt-level = 3 }
