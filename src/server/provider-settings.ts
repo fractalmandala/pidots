@@ -32,7 +32,8 @@ export interface ModelProvider {
 export interface ProviderSettings {
   providers: ModelProvider[];
   chat: { providerId?: string; model?: string };
-  voice: { providerId?: string; model?: string; voice?: string };
+  /** The Apple voice that speaks replies on calls (an AVSpeechSynthesisVoice id). */
+  voice: { voice?: string };
   web: {
     provider: WebSearchProvider;
     parallelApiKey?: string;
@@ -158,9 +159,7 @@ export const servicesPatch = z
       .optional(),
     voice: z
       .object({
-        providerId: trimmed(80).optional(),
-        model: trimmed(200).optional(),
-        voice: trimmed(60).optional(),
+        voice: trimmed(200).optional(),
       })
       .strict()
       .optional(),
@@ -254,7 +253,6 @@ export function removeProvider(
     ...settings,
     providers: settings.providers.filter((item) => item.id !== id),
     chat: unset(settings.chat),
-    voice: unset(settings.voice),
   };
 }
 
@@ -262,7 +260,7 @@ export function updateServices(
   settings: ProviderSettings,
   patch: z.infer<typeof servicesPatch>,
 ): ProviderSettings {
-  for (const role of [patch.chat?.providerId, patch.voice?.providerId])
+  for (const role of [patch.chat?.providerId])
     if (role && !settings.providers.some((item) => item.id === role))
       throw new Error('Choose a provider that exists.');
   return {
@@ -325,7 +323,11 @@ export function providerSettingsView(
 
 export function platformConfigFrom(
   settings: ProviderSettings,
-  runtime: { ownerToken?: string; builtinComputers?: BuiltinComputers },
+  runtime: {
+    ownerToken?: string;
+    builtinComputers?: BuiltinComputers;
+    speechHelper?: string;
+  },
 ): PlatformConfig {
   const builtin =
     (settings.computers.mode ?? 'builtin') === 'builtin'
@@ -334,7 +336,6 @@ export function platformConfigFrom(
   const provider = (id?: string) =>
     settings.providers.find((item) => item.id === id);
   const chat = provider(settings.chat.providerId);
-  const voice = provider(settings.voice.providerId);
   return {
     chatProvider: chat,
     model: chat ? settings.chat.model : undefined,
@@ -355,9 +356,8 @@ export function platformConfigFrom(
           computerToken: settings.computers.computerToken,
           computerNamespace: settings.computers.namespace,
         }),
-    voiceKey: voice?.apiKey,
-    voiceModel: voice ? settings.voice.model : undefined,
-    voiceName: settings.voice.voice ?? 'marin',
+    speechHelper: runtime.speechHelper,
+    voiceId: settings.voice.voice,
     ownerToken: runtime.ownerToken,
   };
 }

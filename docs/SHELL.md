@@ -37,7 +37,7 @@ Docs: <https://gpui-kit.com/docs/installation/>, <https://gpui-kit.com/docs/webv
 
 ```text
 ┌───────────────────────────────────────────────────────────────────────┐
-│ ● ● ●  Pidots v0.1.3 ● Running        ‹  ›  ⟳  📁  [🔑 Providers]      │  GPUI TitleBar (native, transparent titlebar)
+│ ● ● ●  Pidots v0.1.3 ● Running                                        │  GPUI TitleBar (native, transparent titlebar)
 ├───────────────────────────────────────────────────────────────────────┤
 │                                                                       │
 │              WKWebView (native NSView, child of the window)           │  gpui-wry WebView element:
@@ -49,8 +49,7 @@ Docs: <https://gpui-kit.com/docs/installation/>, <https://gpui-kit.com/docs/webv
 - **The window** is opened by `gpui_kit::open_window()` with `TitleBar::title_bar_options()`: a transparent titlebar, so the traffic lights sit inside GPUI's toolbar. Size 1280×840, minimum 720×480, app id `com.pidots.desktop`.
 - **The toolbar** is a GPUI `TitleBar` row:
   - app name, version (`CARGO_PKG_VERSION`) and a status dot (Starting, Running or Stopped);
-  - Back, Forward, Reload (which restarts the server when it isn't running), data folder, and **Providers**.
-  - Buttons other than Reload and the data folder are disabled until the server is ready.
+  - **no buttons, on purpose.** Everything is in the web UI's sidebar or the menu bar (Reload, Back, Forward, Show Data Folder and Logs, Providers & Keys). Keep it that way: the page already has navigation, and GPUI popovers can't draw over the WebView anyway.
 - **The body** is either the WebView (while starting or running) or a **failure screen** with the error and **Try again**.
 - **Theme:** `Theme::sync_system_appearance` runs at startup and whenever macOS switches light or dark (`observe_window_appearance`), so the toolbar follows the system. The web UI has its own setting (System, Light, Dark, stored in the page).
 
@@ -80,12 +79,12 @@ WebView::new(native, window, cx)
 
 The only shell-to-page channel is JavaScript evaluation: `Shell::eval(script)` calls `webview.raw().evaluate_script(script)`, fire-and-forget.
 
-| Shell action         | Script                                                                                                                  |
-| -------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| Back / Forward       | `history.back()` / `history.forward()`                                                                                  |
-| Providers button, ⌘, | `location.hash = '#providers'`. `App.tsx` watches for this hash, opens the Providers & keys dialog and clears the hash. |
-| Undo / Redo          | `document.execCommand('undo' \| 'redo')`                                                                                |
-| Reload               | `webview.raw().reload()` (a native call, not a script)                                                                  |
+| Shell action          | Script                                                                                                                  |
+| --------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| Back / Forward (menu) | `history.back()` / `history.forward()`                                                                                  |
+| Providers & Keys… ⌘,  | `location.hash = '#providers'`. `App.tsx` watches for this hash, opens the Providers & keys dialog and clears the hash. |
+| Undo / Redo           | `document.execCommand('undo' \| 'redo')`                                                                                |
+| Reload                | `webview.raw().reload()` (a native call, not a script)                                                                  |
 
 **There is no page-to-shell channel (no IPC handler).** If you add one with `WebViewBuilder::with_ipc_handler`:
 
@@ -103,7 +102,7 @@ The server sets a strict Content-Security-Policy:
 - connections only to itself;
 - no framing.
 
-It also refuses cross-site requests (`app.ts` middleware). The page is served over plain HTTP on loopback, which App Transport Security allows through `NSAllowsLocalNetworking` in `Info.plist`. `NSMicrophoneUsageDescription` and the `audio-input` entitlement exist so voice calls can use the microphone from the WebView.
+It also refuses cross-site requests (`app.ts` middleware). The page is served over plain HTTP on loopback, which App Transport Security allows through `NSAllowsLocalNetworking` in `Info.plist`. `NSMicrophoneUsageDescription` and `NSSpeechRecognitionUsageDescription` exist because the speech helper (`pidots-speech`, which the server starts) listens to the microphone for voice calls. The WebView never touches the mic.
 
 ## Menu bar and shortcuts (`menus.rs`)
 
@@ -113,7 +112,7 @@ macOS routes ⌘-shortcuts through the **app's menu bar**. Without one, ⌘Q, �
 | ------ | --------------------------------------------------------------------- |
 | Pidots | Providers & Keys… ⌘, · Hide ⌘H · Hide Others ⌥⌘H · Show All · Quit ⌘Q |
 | Edit   | Undo ⌘Z · Redo ⇧⌘Z · Cut ⌘X · Copy ⌘C · Paste ⌘V · Select All ⌘A      |
-| View   | Reload ⌘R · Back ⌘[ · Forward ⌘]                                      |
+| View   | Reload ⌘R · Back ⌘[ · Forward ⌘] · Show Data Folder and Logs          |
 | Window | Minimize ⌘M · Zoom · Close ⌘W                                         |
 
 How it works, and why it's built this way:
@@ -145,7 +144,7 @@ main()
 - `ServerConfig::discover()` uses `Resources/node` with `Resources/app/server.mjs` when running from the app bundle. Otherwise, from a checkout, it uses `node` from Homebrew or `/usr/local` with `dist/server/server/index.js` (requires `npm run build`).
 - `free_port()` asks the OS for a free loopback port. That port is also the one `allow_navigation` accepts.
 - **Environment:** `NODE_ENV=production`, `HOST=127.0.0.1`, `PORT`, `DATABASE_PATH=<data>/pidots.sqlite`, `PIDOTS_DESKTOP=1`, and `PIDOTS_COMPUTERS_FILE` when computers are available. **No API keys are ever passed.**
-- **Output** goes to `<data>/server.log`, where `<data>` is `~/Library/Application Support/Pidots` (`server::data_dir()`). The toolbar's folder button opens it in Finder.
+- **Output** goes to `<data>/server.log`, where `<data>` is `~/Library/Application Support/Pidots` (`server::data_dir()`). View → Show Data Folder and Logs opens it in Finder.
 
 **Readiness:** the poll checks whether the child exited (failure screen with its exit status and the log location) and whether the port accepts TCP (load the UI). After 60 s without either, the failure screen says the server didn't start.
 
@@ -165,6 +164,21 @@ cargo build --release --manifest-path desktop/Cargo.toml --features inspector   
 npm run desktop:dmg                               # full app + DMG (bumps the version)
 ```
 
+### Live development (hot reload)
+
+```bash
+npm run desktop:dev
+```
+
+Runs `npm run dev` (Vite on `127.0.0.1:5173` with HMR, plus the Node server under `tsx --watch` on `4310`) and the debug shell with `PIDOTS_DEV_URL=http://127.0.0.1:5173`. In that mode the shell **does not spawn its own server or the computers helper**; it waits for the dev URL, loads it, and adds its origin to `allow_navigation` (`server::dev_url()`).
+
+- **React/CSS edits** hot-reload in the window instantly (Vite HMR; its websocket is same-origin).
+- **Server edits** restart the Node server (`tsx --watch`); the page reconnects on its own or with ⌘R.
+- **Rust edits** need the shell restarted (stop and rerun the command).
+- The dev server uses `data/pidots.sqlite` in the checkout (override with `DATABASE_PATH`), not the installed app's data, so provider keys added in the app aren't there.
+- Built-in computers aren't available in this mode; use `npm run desktop` to test them.
+- `PIDOTS_DEV_URL` is ignored by release builds (`cfg!(debug_assertions)`), so a shipped app can't be pointed elsewhere.
+
 The first `cargo build` compiles GPUI (minutes). `Cargo.toml` raises `opt-level` for GPUI crates in debug so the dev build stays responsive.
 
 **App bundle layout** (assembled by `bundle-macos.sh`):
@@ -177,19 +191,21 @@ Pidots.app/Contents/
   Resources/node             Node.js 24 (official build, checksum-verified)
   Resources/app/             server.mjs (bundled server) + dist/client
   Resources/computers/       pidots-computers, vmlinux, agent/  (see COMPUTERS.md)
+  Resources/speech/         pidots-speech (voice calls: Apple speech recognition and voices)
 ```
 
 **Signing** goes inside-out, with hardened runtime:
 
 1. `node`, with `node.entitlements` (JIT);
 2. `pidots-computers`, with `computers.entitlements` (virtualization);
-3. the app, with `app.entitlements` (audio input).
+3. `pidots-speech`, with `speech.entitlements` (audio input);
+4. the app, with `app.entitlements` (audio input).
 
 The default identity `-` is ad-hoc, which is fine on the machine that built it. For distribution, set `SIGN_IDENTITY` and notarize (see `desktop/README.md`).
 
 ## Gotchas
 
-- **The WebView covers GPUI.** Popovers, dropdown menus, dialogs and tooltips drawn by GPUI inside the WebView's rectangle are hidden behind it. Keep shell UI in the toolbar, and hide the WebView when replacing it (`set_status`).
+- **The WebView covers GPUI.** Popovers, dropdown menus, dialogs and tooltips drawn by GPUI inside the WebView's rectangle are hidden behind it. Keep shell UI out of the WebView's rectangle (menus are native and safe), and hide the WebView when replacing it (`set_status`).
 - **Menu shortcuts must use the `MENU_ONLY` context**, or ⌘C and ⌘V stop reaching the page.
 - **`evaluate_script` is fire-and-forget.** Use `evaluate_script_with_callback` if you need a result. Never interpolate untrusted text into a script.
 - **Every child process must exit on stdin EOF**, otherwise it outlives a crashed shell.
@@ -199,7 +215,7 @@ The default identity `-` is ad-hoc, which is fine on the machine that built it. 
 
 ## How to…
 
-- **Add a toolbar button:** add a `Button` in `Shell::render`'s right-hand `h_flex`, with an `on_click(cx.listener(Self::…))` handler. If it acts on the page, use `self.eval(…)` or a URL hash the web app handles.
+- **Add a native command:** prefer a menu item (see above) over a toolbar button; the toolbar is deliberately empty. If it acts on the page, use `shell.eval(…)` or a URL hash the web app handles.
 - **Open something in the web app from native UI:** set a hash (as `#providers` does) and handle it in `App.tsx`. That keeps the shell free of web-app internals.
 - **Add a child process:** follow `server.rs` and `computers.rs`:
   - discover the binary in `Resources/` or the checkout;

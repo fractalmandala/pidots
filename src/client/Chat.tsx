@@ -276,7 +276,7 @@ export function Chat({
             title={
               voiceReady
                 ? 'Talk with your Dot'
-                : 'Voice setup requires a voice provider and model in Providers'
+                : 'Voice calls run in the Pidots Mac app'
             }
             disabled={!voiceReady || paused || !loaded || !contextReady}
             onClick={() =>
@@ -428,7 +428,7 @@ export function Chat({
         <div className="chat-compose-note">
           {voiceReady
             ? 'Text and voice, one conversation.'
-            : 'Text is ready. Voice needs separate server configuration.'}
+            : 'Text is ready. Voice calls run in the Pidots Mac app.'}
         </div>
       </form>
     </div>

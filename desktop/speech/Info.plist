@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>CFBundleIdentifier</key>
+  <string>com.pidots.speech</string>
+  <key>CFBundleName</key>
+  <string>pidots-speech</string>
+  <key>CFBundleVersion</key>
+  <string>1</string>
+  <key>CFBundleShortVersionString</key>
+  <string>1.0</string>
+  <!-- macOS checks these before the helper may use the microphone or speech recognition. -->
+  <key>NSMicrophoneUsageDescription</key>
+  <string>Pidots uses the microphone for voice calls with your Dots.</string>
+  <key>NSSpeechRecognitionUsageDescription</key>
+  <string>Pidots turns your speech into text during voice calls with your Dots.</string>
+</dict>
+</plist>

@@ -15,9 +15,10 @@ export interface PlatformConfig extends WebConfig {
   computerNamespace?: string;
   browserUrl?: string;
   browserSecret?: string;
-  voiceKey?: string;
-  voiceModel?: string;
-  voiceName: string;
+  /** The bundled `pidots-speech` helper. Voice calls are off without it. */
+  speechHelper?: string;
+  /** The Apple voice that speaks replies. The system default when unset. */
+  voiceId?: string;
   ownerToken?: string;
 }
 export function setupStatus(config: PlatformConfig): SetupStatus {
@@ -28,7 +29,7 @@ export function setupStatus(config: PlatformConfig): SetupStatus {
   return {
     model: !missing.length,
     browser: !!(config.browserUrl && config.browserSecret),
-    voice: !!(config.voiceKey && config.voiceModel && !missing.length),
+    voice: !!config.speechHelper,
     missing,
   };
 }

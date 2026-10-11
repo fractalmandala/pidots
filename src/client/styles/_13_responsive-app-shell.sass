@@ -1,0 +1,343 @@
+@media (min-width: 1500px)
+	.main-content.overview
+		padding-top: 85px
+	.hero h1
+		font-size: 47px
+	.composer
+		margin-top: 43px
+	.suggestions,
+	.recent
+		margin-top: 42px
+@media (max-width: 1150px)
+	.sidebar
+		width: 210px
+		padding: 0
+	.workspace
+		margin-left: 210px
+	.topbar
+		padding: 0 25px
+	.main-content
+		padding: 45px 32px
+	.main-content.overview
+		padding-top: 45px
+	.task-layout
+		grid-template-columns: minmax(300px, 1fr) minmax(280px, 0.9fr)
+	.conversation
+		padding: 25px 22px
+	.result-content
+		padding: 23px
+	.hero h1
+		font-size: 39px
+	.hero-mascot
+		width: 190px
+	.hero-mascot .mascot
+		width: 190px
+	.top-actions
+		gap: 11px
+@media (max-width: 920px)
+	.task-layout
+		display: block
+	.result-pane
+		border-left: 0
+		border-top: 1px solid var(--line)
+	.conversation
+		max-width: 680px
+	.result-content
+		max-width: 680px
+		margin: auto
+	.hero
+		padding-right: 0
+	.hero-mascot
+		width: 155px
+		height: 205px
+	.hero-mascot .mascot
+		width: 160px
+		height: 180px
+	.mascot-caption
+		left: 5px
+		bottom: 16px
+		font-size: 8px
+	.hero h1
+		font-size: 35px
+	.hero-copy > p
+		font-size: 11px
+	.section-heading > span
+		display: none
+	.suggestion
+		padding: 15px 12px
+	.suggestion strong
+		font-size: 10px
+	.suggestion p
+		font-size: 8px
+	.topbar
+		padding: 0 20px
+	.breadcrumbs
+		font-size: 9px
+	.memory-grid
+		grid-template-columns: 1fr
+	.page-heading
+		align-items: flex-start
+	.page-heading h1
+		font-size: 30px
+@media (max-width: 700px)
+	.sidebar
+		transform: translateX(-100%)
+		transition: transform 0.2s
+		width: 242px
+	.sidebar.open
+		transform: translateX(0)
+	.nav-scrim
+		display: block
+		position: fixed
+		inset: 0
+		border: 0
+		border-radius: 0
+		z-index: 25
+		background: #2f34464d
+	.workspace
+		margin-left: 0
+	.mobile-menu
+		display: flex
+		position: absolute
+		left: 14px
+		top: 21px
+		z-index: 20
+		color: #858b9e
+	.topbar
+		height: 72px
+		padding-left: 51px
+		padding-right: 16px
+	.breadcrumbs
+		gap: 7px
+	.breadcrumbs > span
+		display: none
+	.breadcrumbs > svg
+		display: none
+	.top-actions
+		gap: 12px
+	.pause-button span
+		display: none
+	.mode-badge
+		font-size: 7px
+		padding: 5px 6px
+		letter-spacing: 0.7px
+	.avatar
+		width: 27px
+		height: 27px
+	.main-content,
+	.main-content.overview
+		padding: 38px 22px 27px
+	.hero
+		align-items: flex-start
+		position: relative
+	.hero-copy
+		position: relative
+		z-index: 1
+	.hero .eyebrow
+		font-size: 7px
+		letter-spacing: 1.4px
+	.hero h1
+		font-size: 34px
+		letter-spacing: -1.55px
+		margin-top: 17px
+		line-height: 1.2
+	.hero-copy > p
+		font-size: 10px
+		max-width: 210px
+		line-height: 1.8
+		margin-top: 17px
+	.ready-pill
+		font-size: 8px
+		padding: 5px 7px
+	.hero-mascot
+		width: 105px
+		height: 154px
+		position: absolute
+		right: -8px
+		top: 20px
+		opacity: 0.95
+	.hero-mascot .mascot
+		width: 116px
+		height: 140px
+		margin-top: 10px
+	.mascot-caption
+		display: none
+	.spark-one
+		font-size: 11px
+		top: 25px
+		right: -1px
+	.spark-two
+		font-size: 14px
+		bottom: 17px
+		left: 5px
+	.composer
+		margin-top: 30px
+		min-height: 150px
+		padding: 19px 15px 12px
+	.composer textarea
+		font-size: 11px
+		min-height: 68px
+	.composer-bottom > span
+		font-size: 8px
+		max-width: 210px
+	.composer-bottom > span svg
+		width: 12px
+		flex-shrink: 0
+	.composer-footnote
+		font-size: 7px
+		line-height: 1.8
+		padding: 0 9px
+		margin-top: 8px
+	.suggestions
+		margin-top: 27px
+	.section-heading
+		margin-bottom: 13px
+	.section-heading h2
+		font-size: 11px
+	.suggestion-grid
+		gap: 8px
+	.suggestion
+		padding: 13px 10px
+		min-height: 124px
+	.suggestion-icon
+		font-size: 16px
+		margin-bottom: 12px
+	.suggestion strong
+		font-size: 10px
+		line-height: 1.6
+	.suggestion p
+		font-size: 8px
+		line-height: 1.6
+		margin-top: 6px
+	.suggestion > svg
+		display: none
+	.recent
+		margin-top: 29px
+	.empty-activity
+		padding: 16px 12px
+		gap: 11px
+	.empty-icon
+		width: 32px
+		height: 32px
+		border-radius: 4px
+		flex-shrink: 0
+	.empty-icon svg
+		width: 17px
+	.empty-activity strong
+		font-size: 9px
+		line-height: 1.7
+		display: block
+	.empty-activity p
+		font-size: 8px
+		line-height: 1.8
+		margin-top: 3px
+	.empty-decoration
+		display: none
+	.main-footer
+		font-size: 7px
+		margin-top: 29px
+	.page-heading
+		flex-wrap: wrap
+		gap: 16px
+		margin-bottom: 27px
+	.page-heading p
+		font-size: 11px
+	.page-heading h1
+		font-size: 31px
+	.task-row
+		padding: 13px 10px
+		gap: 9px
+	.task-row-icon
+		width: 30px
+		height: 30px
+		border-radius: 4px
+	.task-row strong
+		font-size: 11px
+	.task-row .status
+		font-size: 8px
+		padding: 4px 5px
+	.task-row > svg
+		display: none
+	.large-empty
+		margin-top: 30px
+	.notice
+		padding: 12px 22px
+		font-size: 10px
+	.conversation
+		padding: 23px 22px 38px
+	.conversation-heading
+		margin-bottom: 26px
+	.task-title h1
+		font-size: 24px
+	.task-controls
+		gap: 6px
+	.task-controls button
+		font-size: 9px
+	.task-layout
+		min-height: calc(100vh - 72px)
+	.modal
+		padding: 30px 23px
+		border-radius: 8px
+	.modal-backdrop
+		padding: 16px
+	.modal h2
+		font-size: 25px
+	.error-banner
+		padding: 10px 18px
+		font-size: 11px
+	.result-content
+		padding: 23px
+	.pane-header
+		position: static
+@media (prefers-reduced-motion: reduce)
+	*,
+	*:before,
+	*:after
+		animation: none !important
+		transition: none !important
+		scroll-behavior: auto !important
+@media (max-width: 700px)
+	.hero-copy
+		min-width: 0
+		width: 100%
+	.hero h1
+		font-size: 33px
+		max-width: 100%
+		overflow-wrap: normal
+	.hero-mascot
+		display: none
+	.hero-copy > p
+		max-width: none
+	.composer textarea
+		min-height: 78px
+		overflow: auto
+	.composer-bottom > span
+		max-width: 230px
+		line-height: 1.5
+	.suggestion-grid
+		grid-template-columns: 1fr
+	.suggestion
+		min-height: 76px
+		padding: 15px 17px 15px 55px
+	.suggestion-icon
+		position: absolute
+		left: 19px
+		top: 24px
+		font-size: 20px
+	.suggestion strong
+		font-size: 11px
+	.suggestion p
+		font-size: 9px
+		margin-top: 3px
+	.suggestion > svg
+		display: block
+		right: 17px
+		top: 27px
+	.composer-footnote
+		font-size: 8px
+	.hero
+		padding-right: 0
+	.hero h1
+		letter-spacing: -1.6px
+	.main-content.overview
+		padding-top: 34px

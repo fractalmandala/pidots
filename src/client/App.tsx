@@ -7,7 +7,6 @@ import {
   ArrowUpRight,
   BookOpen,
   Clock3,
-  Folder,
   KeyRound,
   Menu,
   MessageCircle,
@@ -305,55 +304,6 @@ export function App() {
     );
   const content = (
     <div className={`app template-app ${navCollapsed ? 'nav-collapsed' : ''}`}>
-      <nav className="icon-rail" aria-label="Workspace navigation">
-        <button
-          className="rail-brand"
-          aria-label="Pidots home"
-          onClick={() => {
-            setView('chat');
-            setSelectedThread(undefined);
-          }}
-        >
-          o<span>·</span>
-        </button>
-        <button
-          aria-label={navCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-          onClick={() => setNavCollapsed(!navCollapsed)}
-        >
-          <PanelLeft size={18} />
-        </button>
-        <button
-          aria-label="New chat"
-          disabled={!configured}
-          onClick={() => void newConversation()}
-        >
-          <Plus size={19} />
-        </button>
-        <button
-          aria-label="Open Spaces"
-          onClick={() => {
-            if (workspace.spaces[0]) openPage(workspace.spaces[0].id);
-          }}
-        >
-          <Folder size={18} />
-        </button>
-        <button aria-label="Open activity" onClick={() => setView('tasks')}>
-          <Clock3 size={18} />
-        </button>
-        <button
-          aria-label="Open providers and keys"
-          onClick={() => setProviders(true)}
-        >
-          <KeyRound size={18} />
-        </button>
-        <button
-          className="rail-settings"
-          aria-label="Open settings"
-          onClick={() => setDialog({ type: 'settings' })}
-        >
-          <Settings2 size={18} />
-        </button>
-      </nav>
       <button
         className="mobile-menu icon-button"
         aria-label="Open navigation"
@@ -381,13 +331,7 @@ export function App() {
             setSelectedThread(undefined);
           }}
         >
-          <span className="dotted-logo">
-            <i />
-            <i />
-            <i />
-            <i />
-          </span>
-          Pidots<span className="wordmark-dot">•</span>
+          pidots
         </button>
         <button
           className="new-chat nav-item"

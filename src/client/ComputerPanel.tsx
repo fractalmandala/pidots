@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { FileText, Folder, FolderPlus, X } from 'lucide-react';
 import type { Dot } from '../shared/types';
 import type { ComputerAction, ComputerStatus } from '../shared/computer-types';
 import { api } from './api';
@@ -12,9 +13,9 @@ type Screen = {
 };
 
 export function ComputerPanel({ dot }: { dot: Dot }) {
-  const [tab, setTab] = useState<'Browser' | 'Files' | 'Terminal' | 'Activity'>(
-    'Browser',
-  );
+  const [tab, setTab] = useState<
+    'Browser' | 'Folders' | 'Files' | 'Terminal' | 'Activity'
+  >('Browser');
   const [status, setStatus] = useState<ComputerStatus>();
   const [screen, setScreen] = useState<Screen>();
   const [error, setError] = useState('');
@@ -228,18 +229,18 @@ export function ComputerPanel({ dot }: { dot: Dot }) {
             role="tablist"
             aria-label="Computer tools"
           >
-            {(['Browser', 'Files', 'Terminal', 'Activity'] as const).map(
-              (name) => (
-                <button
-                  role="tab"
-                  aria-selected={tab === name}
-                  key={name}
-                  onClick={() => setTab(name)}
-                >
-                  {name}
-                </button>
-              ),
-            )}
+            {(
+              ['Browser', 'Folders', 'Files', 'Terminal', 'Activity'] as const
+            ).map((name) => (
+              <button
+                role="tab"
+                aria-selected={tab === name}
+                key={name}
+                onClick={() => setTab(name)}
+              >
+                {name}
+              </button>
+            ))}
           </div>
           {status.configured && (
             <>
@@ -468,13 +469,112 @@ export function ComputerPanel({ dot }: { dot: Dot }) {
                   </details>
                 )}
               </section>
+              <section
+                className="computer-section computer-folders"
+                hidden={tab !== 'Folders'}
+                aria-label="Folders from your Mac"
+              >
+                <h3>Folders from your Mac</h3>
+                <p>
+                  {dot.name} can read and change these, at the same paths,
+                  inside its computer. Adding or removing one restarts a running
+                  computer.
+                </p>
+                {status.folders.length ? (
+                  <ul className="computer-folder-list">
+                    {status.folders.map((folder) => (
+                      <li key={folder.path}>
+                        {folder.kind === 'file' ? (
+                          <FileText size={16} aria-hidden />
+                        ) : (
+                          <Folder size={16} aria-hidden />
+                        )}
+                        <span className="computer-folder-name">
+                          <strong>
+                            {folder.path.split('/').filter(Boolean).pop() ??
+                              folder.path}
+                          </strong>
+                          <small title={folder.path}>{folder.path}</small>
+                        </span>
+                        {folder.kind === 'directory' && (
+                          <button
+                            disabled={
+                              !running || !status.permissions.files || busy
+                            }
+                            title={
+                              running && status.permissions.files
+                                ? undefined
+                                : 'Start the computer with Workspace files permission to browse'
+                            }
+                            onClick={() => {
+                              setPath(folder.path);
+                              setTab('Files');
+                              void action(
+                                'files_list',
+                                { path: folder.path },
+                                true,
+                              );
+                            }}
+                          >
+                            Browse
+                          </button>
+                        )}
+                        <button
+                          className="computer-folder-remove"
+                          aria-label={`Stop sharing ${folder.path}`}
+                          title="Stop sharing"
+                          disabled={busy}
+                          onClick={() =>
+                            void run('/folders/remove', { path: folder.path })
+                          }
+                        >
+                          <X size={14} aria-hidden />
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="computer-folder-empty">
+                    No folders shared yet. {dot.name} only sees its own
+                    workspace.
+                  </p>
+                )}
+                <div className="computer-actions">
+                  <button
+                    className="computer-folder-add"
+                    disabled={busy}
+                    onClick={() =>
+                      void run('/folders/pick', { kind: 'directory' })
+                    }
+                  >
+                    <FolderPlus size={15} aria-hidden /> Add folder…
+                  </button>
+                  <button
+                    disabled={busy}
+                    onClick={() => void run('/folders/pick', { kind: 'file' })}
+                  >
+                    Add file…
+                  </button>
+                </div>
+                {status.folders.length > 0 &&
+                  !status.permissions.files &&
+                  !status.permissions.shell && (
+                    <p className="computer-hint">
+                      Turn on Workspace files or Terminal commands in Computer
+                      settings so {dot.name} can use these.
+                    </p>
+                  )}
+              </section>
               <details
                 className="computer-section"
                 open
                 hidden={tab !== 'Files'}
               >
                 <summary>Workspace files</summary>
-                <p>Paths are relative to this Dot’s persistent workspace.</p>
+                <p>
+                  Paths are relative to this Dot’s persistent workspace, or full
+                  paths inside a shared folder.
+                </p>
                 <label>
                   Path
                   <input
@@ -711,7 +811,8 @@ export function ComputerPanel({ dot }: { dot: Dot }) {
             <p className="computer-hint">
               Stopping keeps this Dot’s files, software and browser sign-ins.
               Each computer is a private Linux virtual machine; the Dot works as
-              the user <code>dot</code> in <code>/home/dot/workspace</code>.
+              the user <code>dot</code> in <code>/home/dot/workspace</code>,
+              plus any folders you share from your Mac.
             </p>
           </details>
         </>

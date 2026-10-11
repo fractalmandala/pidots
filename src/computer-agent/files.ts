@@ -15,24 +15,45 @@ export class FileError extends Error {
 }
 
 /**
- * The Dot's workspace. Every path is relative to it; each component is
- * checked so a symlink can never redirect a read or write outside it.
+ * The Dot's workspace. Paths are relative to it, or absolute inside a folder
+ * the owner shared from their Mac (mounted at the same path). Each component
+ * is checked so a symlink can never redirect a read or write outside them.
  */
 export class Workspace {
-  constructor(readonly root: string) {}
+  constructor(
+    readonly root: string,
+    /** Absolute paths of shared folders and files mounted in this computer. */
+    readonly shared: string[] = [],
+  ) {}
 
-  /** Resolves a relative path and rejects traversal and symlinks. */
+  /** The shared folder or file an absolute path is in, most specific first. */
+  private sharedRoot(path: string) {
+    const target = resolve(path);
+    return this.shared
+      .filter((root) => target === root || target.startsWith(root + sep))
+      .sort((a, b) => b.length - a.length)[0];
+  }
+
+  /** Resolves a path and rejects traversal and symlinks. */
   private async resolve(path: string, { parents = false } = {}) {
-    if (
-      path.startsWith('/') ||
-      path.includes('\0') ||
-      path.split('/').some((part) => part === '..')
-    )
-      throw new FileError('Use a relative workspace path without traversal.');
-    const root = await realpath(this.root);
-    const target = resolve(root, path);
+    if (path.includes('\0') || path.split('/').some((part) => part === '..'))
+      throw new FileError('Use a path without traversal.');
+    const absolute = path.startsWith('/');
+    const base = absolute ? this.sharedRoot(path) : this.root;
+    if (!base)
+      throw new FileError(
+        'That path is not in the workspace or a shared folder.',
+        403,
+      );
+    const root = await realpath(base);
+    const target = absolute
+      ? resolve(
+          root,
+          resolve(path).slice(resolve(base).length).replace(/^\//, ''),
+        )
+      : resolve(root, path);
     if (target !== root && !target.startsWith(root + sep))
-      throw new FileError('Use a relative workspace path without traversal.');
+      throw new FileError('Use a path without traversal.');
     const parts = target.slice(root.length).split(sep).filter(Boolean);
     let current = root;
     for (const [index, part] of parts.entries()) {

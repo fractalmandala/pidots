@@ -1,0 +1,338 @@
+.task-layout
+	display: grid
+	grid-template-columns: minmax(340px, 1fr) minmax(330px, 0.95fr)
+	min-height: calc(100vh - 83px)
+.task-layout.pane-hidden
+	grid-template-columns: 1fr
+.conversation
+	padding: 30px 34px 60px
+	min-width: 0
+	max-width: 900px
+	width: 100%
+	margin: auto
+.conversation-heading
+	display: flex
+	align-items: center
+	justify-content: space-between
+	margin-bottom: 36px
+.task-title h1
+	font-size: 27px
+	line-height: 1.35
+	margin: 13px 0 15px
+	overflow-wrap: anywhere
+.task-title
+	margin-bottom: 38px
+.user-message
+	display: flex
+	gap: 12px
+	align-items: flex-start
+	margin: 22px 0
+	font-size: 12px
+.message-avatar
+	border-radius: 50%
+	background: #ece8e0
+	color: #9a9288
+	width: 30px
+	height: 30px
+	display: grid
+	place-items: center
+	font-size: 8px
+	flex-shrink: 0
+.user-message > div
+	border: 1px solid #e9e8e4
+	background: #fff
+	border-radius: 0 10px 10px
+	padding: 12px 16px
+	line-height: 1.8
+	overflow-wrap: anywhere
+.dot-message
+	display: flex
+	align-items: flex-start
+	margin-top: 30px
+	gap: 5px
+.dot-message .mascot
+	margin-left: -10px
+	margin-top: -5px
+.dot-message > div
+	padding-top: 3px
+.dot-message strong
+	font-size: 12px
+	font-weight: 550
+.dot-message strong span
+	font-size: 9px
+	color: #a1a2ae
+	margin-left: 6px
+	font-weight: 400
+.dot-message p
+	font-size: 12px
+	line-height: 1.8
+	color: #8c8f9b
+	margin: 10px 0 0
+.activity-timeline
+	margin: 25px 0 24px 45px
+.timeline-row
+	display: flex
+	align-items: flex-start
+	gap: 10px
+	font-size: 10px
+	color: #999ca8
+	min-height: 47px
+	position: relative
+	padding-bottom: 15px
+.timeline-row:not(:last-child):before
+	content: ''
+	position: absolute
+	width: 1px
+	background: #e0e4ed
+	left: 8px
+	top: 17px
+	bottom: 0
+.timeline-row > span
+	display: grid
+	place-items: center
+	background: #eaeef7
+	color: #8f9ec1
+	width: 17px
+	height: 17px
+	border-radius: 50%
+	flex-shrink: 0
+.timeline-row > span.current
+	background: #e2e9f7
+	color: #7b91c1
+.timeline-row > div
+	line-height: 1.6
+.timeline-row small
+	display: block
+	font-size: 8px
+	color: #b1b2ba
+	margin-top: 3px
+.task-controls
+	display: flex
+	gap: 7px
+	flex-wrap: wrap
+	margin: 25px 0
+.task-controls button
+	font-size: 10px
+	padding: 8px 10px
+	color: #82899e
+.quiet-button
+	border: 0
+	background: none
+.task-error
+	background: #faeeea
+	border: 1px solid #f0ddd6
+	padding: 15px
+	margin-top: 20px
+	border-radius: 4px
+	font-size: 12px
+	color: #b07a6d
+.task-error p
+	margin: 7px 0 0
+.schedule-note
+	font-size: 10px
+	color: #989bad
+	display: flex
+	align-items: center
+	gap: 7px
+.run-history
+	border-top: 1px solid var(--line)
+	padding-top: 23px
+	margin-top: 36px
+.run-history h3,
+.sources h3
+	font-size: 12px
+	letter-spacing: 0
+	color: #858998
+	display: flex
+	align-items: center
+	gap: 7px
+.run-history h3 span,
+.sources h3 span
+	font-size: 9px
+	color: #b1b3bf
+	font-weight: 400
+.run-history details
+	border-bottom: 1px solid var(--line)
+	font-size: 11px
+	color: #999eaa
+.run-history summary
+	display: flex
+	gap: 8px
+	align-items: center
+	padding: 14px 0
+	cursor: pointer
+	list-style: none
+.run-history summary time
+	margin-left: auto
+	font-size: 9px
+.history-dot
+	width: 5px
+	height: 5px
+	background: #b2bbc8
+	border-radius: 50%
+.history-dot.completed
+	background: #98b299
+.history-dot.failed
+	background: #c39b8e
+.history-result
+	font-size: 11px
+	line-height: 1.8
+	overflow-wrap: anywhere
+	padding: 10px
+.result-pane
+	border-left: 1px solid var(--line)
+	background: #fdfcfb
+	min-width: 0
+.pane-header
+	display: flex
+	justify-content: space-between
+	align-items: center
+	padding: 20px 22px
+	border-bottom: 1px solid var(--line)
+	height: 69px
+	position: sticky
+	top: 0
+	background: #fdfcfb
+	z-index: 2
+.pane-tabs
+	display: flex
+	gap: 6px
+.pane-tabs button
+	font-size: 10px
+	color: #9b9fab
+	padding: 7px 10px
+	border: 0
+	background: none
+.pane-tabs .selected
+	background: #eeeff5
+	color: #7482af
+.result-content
+	padding: 29px
+.result-meta
+	display: flex
+	align-items: center
+	justify-content: space-between
+	margin-bottom: 15px
+.sample-note
+	background: #f1f0f8
+	border: 1px solid #e8e6f1
+	border-radius: 4px
+	color: #9790b0
+	font-size: 10px
+	line-height: 1.8
+	padding: 11px 13px
+	margin-bottom: 22px
+.brief
+	font-size: 12px
+	line-height: 1.9
+	color: #737888
+	overflow-wrap: anywhere
+	white-space: pre-line
+.brief h1,
+.brief h2,
+.brief h3
+	color: #4f5565
+	line-height: 1.45
+	letter-spacing: -0.3px
+.brief h1
+	font-size: 23px
+.brief h2
+	font-size: 18px
+.brief h3
+	font-size: 15px
+.brief p
+	margin: 0 0 18px
+	line-height: 1.9
+.brief ul,
+.brief ol
+	padding-left: 18px
+.brief a
+	color: #7185c2
+	text-decoration: underline
+.brief pre
+	white-space: pre-wrap
+	background: #f1f2f5
+	padding: 12px
+	border-radius: 4px
+.sources
+	border-top: 1px solid var(--line)
+	margin-top: 30px
+	padding-top: 23px
+.source-card
+	display: flex
+	align-items: flex-start
+	gap: 10px
+	background: #fff
+	border: 1px solid var(--line)
+	border-radius: 4px
+	padding: 13px
+	margin-top: 10px
+.source-card > div
+	min-width: 0
+	flex: 1
+.source-icon
+	width: 29px
+	height: 29px
+	display: grid
+	place-items: center
+	background: #f0f2f8
+	color: #94a1c2
+	border-radius: 4px
+	flex-shrink: 0
+.source-card strong
+	font-size: 10px
+	font-weight: 500
+	color: #858c9e
+	overflow-wrap: anywhere
+.source-card p
+	font-size: 10px
+	color: #a0a4af
+	margin: 6px 0
+	line-height: 1.6
+.source-card small
+	font-size: 8px
+	color: #b0b3c0
+.source-card > svg
+	color: #b2b8c9
+	flex-shrink: 0
+.pane-empty
+	text-align: center
+	max-width: 340px
+	padding: 60px 25px
+	margin: auto
+.pane-empty .mascot
+	width: 130px
+	height: 130px
+	opacity: 0.7
+.pane-empty h3
+	font-size: 17px
+	color: #969cae
+.pane-empty p
+	font-size: 11px
+	line-height: 1.9
+	color: #a7abb7
+.computer-view
+	padding: 20px
+.computer-view > img
+	width: 100%
+	border: 1px solid var(--line)
+	border-radius: 0 0 8px 8px
+.computer-view > p
+	font-size: 10px
+	color: #a1a6b5
+	line-height: 1.8
+.browser-bar
+	border: 1px solid var(--line)
+	border-radius: 7px 7px 0 0
+	padding: 10px
+	display: flex
+	align-items: center
+	gap: 4px
+	color: #c0c3ce
+	background: #f7f7f9
+.browser-bar span
+	font-size: 8px
+	margin-left: 6px
+	overflow: hidden
+	text-overflow: ellipsis
+	white-space: nowrap

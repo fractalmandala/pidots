@@ -128,7 +128,7 @@ pi-durable sends only what changed, as positional `pi.system` entries. Anything 
 
 ### Server-side turns: `turn(threadId, prompt, signal, source)`
 
-Used by scheduled tasks (`index.ts` runner, `scheduled_task`) and voice calls (`voice.ts`: compute requests, and `voice_receipt` summaries). It sends with `interactive: false`, waits for the submission, and returns the answer text (`answerText`). Aborting the signal stops the conversation.
+Used by scheduled tasks (`index.ts` runner, `scheduled_task`) and voice calls (`voice.ts`: each heard utterance, and `voice_receipt` summaries). It sends with `interactive: false`, waits for the submission, and returns the answer text (`answerText`). Aborting the signal stops the conversation.
 
 ### Watchdog (`patrol`, every 500 ms)
 

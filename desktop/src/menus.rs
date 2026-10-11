@@ -27,6 +27,7 @@ actions!(
         Reload,
         Back,
         Forward,
+        ShowDataFolder,
         Minimize,
         Zoom,
         CloseWindow,
@@ -78,6 +79,7 @@ pub fn install(shell: Entity<Shell>, cx: &mut App) {
     cx.on_action(move |_: &Forward, cx| forward(cx));
     let providers = script(&shell, "location.hash = '#providers'");
     cx.on_action(move |_: &OpenProviders, cx| providers(cx));
+    cx.on_action(|_: &ShowDataFolder, _| crate::server::reveal(&crate::server::data_dir()));
     let reload = shell.clone();
     cx.on_action(move |_: &Reload, cx| reload.update(cx, |shell, cx| shell.reload_page(cx)));
 
@@ -104,6 +106,8 @@ pub fn install(shell: Entity<Shell>, cx: &mut App) {
             MenuItem::action("Reload", Reload),
             MenuItem::action("Back", Back),
             MenuItem::action("Forward", Forward),
+            MenuItem::separator(),
+            MenuItem::action("Show Data Folder and Logs", ShowDataFolder),
         ]),
         Menu::new("Window").items([
             MenuItem::action("Minimize", Minimize),

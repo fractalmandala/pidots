@@ -11,15 +11,14 @@ mod server;
 
 use std::time::Duration;
 
-use gpui_kit::assets::IconName;
+use computers::{Computers, ComputersConfig};
 use gpui_kit::component::{
-    ActiveTheme as _, Disableable as _, Sizable as _, StyledExt as _, Theme, TitleBar,
+    ActiveTheme as _, StyledExt as _, Theme, TitleBar,
     button::{Button, ButtonVariants as _},
     h_flex, v_flex,
 };
 use gpui_kit::*;
 use gpui_wry::WebView;
-use computers::{Computers, ComputersConfig};
 use server::{Server, ServerConfig};
 
 #[derive(Clone, PartialEq)]
@@ -79,18 +78,23 @@ impl Shell {
     fn set_status(&mut self, status: Status, cx: &mut App) {
         let visible = !matches!(status, Status::Failed(_));
         self.status = status;
-        self.webview.update(cx, |view, _| {
-            if visible {
-                view.show()
-            } else {
-                view.hide()
-            }
-        });
+        self.webview.update(
+            cx,
+            |view, _| {
+                if visible { view.show() } else { view.hide() }
+            },
+        );
     }
 
     fn start_server(&mut self, cx: &mut Context<Self>) {
         if let Some(mut previous) = self.server.take() {
             previous.stop();
+        }
+        self.set_status(Status::Starting, cx);
+        if let Some((url, port)) = server::dev_url() {
+            self.wait_and_load(url, port, cx);
+            cx.notify();
+            return;
         }
         // Computers are optional: if the helper is missing or fails, Pidots
         // still runs and the Computer panel says they are unavailable.
@@ -101,7 +105,6 @@ impl Shell {
                     .ok()
             });
         }
-        self.set_status(Status::Starting, cx);
         let config = match ServerConfig::discover() {
             Ok(config) => config,
             Err(error) => {
@@ -116,63 +119,61 @@ impl Shell {
                 let url = server.url();
                 let port = server.port();
                 self.server = Some(server);
-                self._poll = Some(cx.spawn(async move |this, cx| {
-                    for _ in 0..240 {
-                        cx.background_executor()
-                            .timer(Duration::from_millis(250))
-                            .await;
-                        let exited = this
-                            .update(cx, |this, _| {
-                                this.server.as_mut().and_then(Server::exit_status)
-                            })
-                            .ok()
-                            .flatten();
-                        if let Some(code) = exited {
-                            let _ = this.update(cx, |this, cx| {
-                                this.set_status(
-                                    Status::Failed(format!(
-                                        "The Pidots server exited ({code}). See the log in {}.",
-                                        server::data_dir().display()
-                                    )),
-                                    cx,
-                                );
-                                cx.notify();
-                            });
-                            return;
-                        }
-                        if server::is_listening(port) {
-                            let _ = this.update(cx, |this, cx| {
-                                this.set_status(Status::Ready, cx);
-                                this.webview.update(cx, |view, _| view.load_url(&url));
-                                cx.notify();
-                            });
-                            return;
-                        }
-                    }
-                    let _ = this.update(cx, |this, cx| {
-                        this.set_status(
-                            Status::Failed("The Pidots server did not start in 60 seconds.".into()),
-                            cx,
-                        );
-                        cx.notify();
-                    });
-                }));
+                self.wait_and_load(url, port, cx);
             }
             Err(error) => self.set_status(Status::Failed(format!("{error:#}")), cx),
         }
         cx.notify();
     }
 
+    /// Polls until the server listens on `port`, then loads `url`. Fails if
+    /// the spawned server exits or nothing listens within 60 seconds.
+    fn wait_and_load(&mut self, url: String, port: u16, cx: &mut Context<Self>) {
+        self._poll = Some(cx.spawn(async move |this, cx| {
+            for _ in 0..240 {
+                cx.background_executor()
+                    .timer(Duration::from_millis(250))
+                    .await;
+                let exited = this
+                    .update(cx, |this, _| {
+                        this.server.as_mut().and_then(Server::exit_status)
+                    })
+                    .ok()
+                    .flatten();
+                if let Some(code) = exited {
+                    let _ = this.update(cx, |this, cx| {
+                        this.set_status(
+                            Status::Failed(format!(
+                                "The Pidots server exited ({code}). See the log in {}.",
+                                server::data_dir().display()
+                            )),
+                            cx,
+                        );
+                        cx.notify();
+                    });
+                    return;
+                }
+                if server::is_listening(port) {
+                    let _ = this.update(cx, |this, cx| {
+                        this.set_status(Status::Ready, cx);
+                        this.webview.update(cx, |view, _| view.load_url(&url));
+                        cx.notify();
+                    });
+                    return;
+                }
+            }
+            let _ = this.update(cx, |this, cx| {
+                this.set_status(
+                    Status::Failed("The Pidots server did not start in 60 seconds.".into()),
+                    cx,
+                );
+                cx.notify();
+            });
+        }));
+    }
+
     pub fn eval(&self, script: &str, cx: &mut Context<Self>) {
         let _ = self.webview.read(cx).raw().evaluate_script(script);
-    }
-
-    fn go_back(&mut self, _: &ClickEvent, _: &mut Window, cx: &mut Context<Self>) {
-        self.eval("history.back()", cx);
-    }
-
-    fn go_forward(&mut self, _: &ClickEvent, _: &mut Window, cx: &mut Context<Self>) {
-        self.eval("history.forward()", cx);
     }
 
     fn reload(&mut self, _: &ClickEvent, _: &mut Window, cx: &mut Context<Self>) {
@@ -187,15 +188,6 @@ impl Shell {
             }
             _ => self.start_server(cx),
         }
-    }
-
-    fn open_providers(&mut self, _: &ClickEvent, _: &mut Window, cx: &mut Context<Self>) {
-        // The web app opens its Providers dialog for this hash.
-        self.eval("location.hash = '#providers'", cx);
-    }
-
-    fn reveal_data(&mut self, _: &ClickEvent, _: &mut Window, _: &mut Context<Self>) {
-        server::reveal(&server::data_dir());
     }
 
     fn stop_server(&mut self) {
@@ -222,7 +214,6 @@ impl Render for Shell {
             Status::Ready => (theme.success, "Running"),
             Status::Failed(_) => (theme.danger, "Stopped"),
         };
-        let ready = self.status == Status::Ready;
 
         let toolbar = TitleBar::new().child(
             h_flex()
@@ -251,53 +242,6 @@ impl Render for Shell {
                                 .child(div().size_2().rounded_full().bg(dot))
                                 .child(label),
                         ),
-                )
-                .child(
-                    h_flex()
-                        .gap_1()
-                        .items_center()
-                        .child(
-                            Button::new("back")
-                                .ghost()
-                                .small()
-                                .icon(IconName::ChevronLeft)
-                                .tooltip("Back")
-                                .disabled(!ready)
-                                .on_click(cx.listener(Self::go_back)),
-                        )
-                        .child(
-                            Button::new("forward")
-                                .ghost()
-                                .small()
-                                .icon(IconName::ChevronRight)
-                                .tooltip("Forward")
-                                .disabled(!ready)
-                                .on_click(cx.listener(Self::go_forward)),
-                        )
-                        .child(
-                            Button::new("reload")
-                                .ghost()
-                                .small()
-                                .icon(IconName::RefreshCw)
-                                .tooltip(if ready { "Reload" } else { "Restart server" })
-                                .on_click(cx.listener(Self::reload)),
-                        )
-                        .child(
-                            Button::new("data")
-                                .ghost()
-                                .small()
-                                .icon(IconName::FolderOpen)
-                                .tooltip("Show data folder and logs")
-                                .on_click(cx.listener(Self::reveal_data)),
-                        )
-                        .child(
-                            Button::new("providers")
-                                .small()
-                                .icon(IconName::KeyRound)
-                                .label("Providers")
-                                .disabled(!ready)
-                                .on_click(cx.listener(Self::open_providers)),
-                        ),
                 ),
         );
 
@@ -308,7 +252,12 @@ impl Render for Shell {
                 .justify_center()
                 .gap_3()
                 .p_8()
-                .child(div().text_lg().font_semibold().child("Pidots could not start"))
+                .child(
+                    div()
+                        .text_lg()
+                        .font_semibold()
+                        .child("Pidots could not start"),
+                )
                 .child(
                     div()
                         .max_w(px(560.))

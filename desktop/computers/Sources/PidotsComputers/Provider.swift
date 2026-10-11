@@ -18,17 +18,25 @@ actor Provider {
 
     enum Status: String { case stopped, preparing, running, failed }
 
+    /// A host folder or file shared read-write into the VM. The broker
+    /// chooses them; the provider only refuses ones that would break the VM.
+    struct SharedMount: Equatable {
+        let source: String
+        let destination: String
+    }
+
     private struct Running {
         let container: LinuxContainer
         let service: LinuxProcess
         let relay: Relay
         let port: UInt16
         let socket: URL
+        let mounts: [SharedMount]
     }
 
     /// Bump when the install script changes; computers made from an older
     /// template keep working on their own disks.
-    static let templateVersion = "base-v1"
+    static let templateVersion = "base-v2"
     static let initImage = "ghcr.io/apple/containerization/vminit:0.49.0"
     static let baseImage =
         "docker.io/library/node:24-bookworm-slim@sha256:d6aa754f16b3197301076f047b5def2f02ea1dbbc2ca920407d46d7ec7f87b20"
@@ -55,6 +63,8 @@ actor Provider {
     private var failures: [String: String] = [:]
     private var templateTask: Task<Void, Error>?
     private var bootTasks: [String: Task<Void, Never>] = [:]
+    /// Shared folders for each computer's next boot.
+    private var mounts: [String: [SharedMount]] = [:]
     private let socketFolder: URL
 
     init(config: Config) throws {
@@ -81,6 +91,7 @@ actor Provider {
         if let run = running[id] {
             entry["status"] = Status.running.rawValue
             entry["port"] = Int(run.port)
+            entry["mounts"] = run.mounts.map(\.destination)
         } else if bootTasks[id] != nil {
             entry["status"] = Status.preparing.rawValue
             entry["message"] = progress[id] ?? "Starting the computer…"
@@ -95,8 +106,11 @@ actor Provider {
 
     /// Starts the Dot's computer, creating it first if needed. Answers at once;
     /// first-time setup continues in the background and reports progress.
-    func ensure(_ id: String) -> [String: Any] {
+    /// Shared folders apply at boot; the broker stops a running computer
+    /// before asking for different ones.
+    func ensure(_ id: String, mounts requested: [SharedMount] = []) -> [String: Any] {
         if running[id] == nil, bootTasks[id] == nil {
+            mounts[id] = requested
             failures[id] = nil
             progress[id] = "Starting the computer…"
             bootTasks[id] = Task { await self.boot(id) }
@@ -144,7 +158,7 @@ actor Provider {
             }
             try Task.checkCancellation()
             progress[id] = "Starting the computer…"
-            running[id] = try await start(id, disk: disk)
+            running[id] = try await start(id, disk: disk, mounts: mounts[id] ?? [])
         } catch is CancellationError {
             await shutdown(id)
         } catch {
@@ -188,7 +202,7 @@ actor Provider {
         let building = config.paths.templates.appendingPathComponent("building.ext4")
         try? FileManager.default.removeItem(at: building)
         progress[id] = "Preparing the disk (first time only)…"
-        let rootfs = try await EXT4Unpacker(capacityInBytes: 32.gib(), journal: .default)
+        let rootfs = try await EXT4Unpacker(capacityInBytes: 4.gib(), journal: .default)
             .unpack(image, for: .current, at: building, progress: nil)
         let builder = "pidots-template-build"
         try FileManager.default.createDirectory(at: config.paths.containerRoot(builder), withIntermediateDirectories: true)
@@ -233,7 +247,7 @@ actor Provider {
         try state.save(to: config.paths.stateFile)
     }
 
-    private func start(_ id: String, disk: URL) async throws -> Running {
+    private func start(_ id: String, disk: URL, mounts shared: [SharedMount]) async throws -> Running {
         guard var manager else { throw ProviderError("The computer system is not ready.") }
         defer { self.manager = manager }
         let name = containerName(id)
@@ -259,6 +273,10 @@ actor Provider {
                 config.dns = .init(nameservers: [gateway])
             }
             config.mounts.append(.share(source: agent, destination: "/opt/pidots", options: ["ro"]))
+            // Parents first, so a nested share mounts on top of its parent.
+            for mount in shared.sorted(by: { $0.destination.count < $1.destination.count }) {
+                config.mounts.append(.share(source: mount.source, destination: mount.destination))
+            }
             config.sockets = [UnixSocketConfiguration(
                 source: URL(fileURLWithPath: "/run/pidots/agent.sock"),
                 destination: socket,
@@ -288,6 +306,7 @@ actor Provider {
                     "PIDOTS_TOKEN=\(token)",
                     "PIDOTS_SOCKET=/run/pidots/agent.sock",
                     "PIDOTS_CHROMIUM=/usr/bin/chromium",
+                    "PIDOTS_SHARED=\(shared.map(\.destination).joined(separator: "\n"))",
                 ]
                 config.stdout = logs
                 config.stderr = logs
@@ -297,7 +316,7 @@ actor Provider {
             let relay = try Relay(socketPath: socket.path)
             let port = try await relay.start()
             log("computer \(id) running on 127.0.0.1:\(port)")
-            return Running(container: container, service: service, relay: relay, port: port, socket: socket)
+            return Running(container: container, service: service, relay: relay, port: port, socket: socket, mounts: shared)
         } catch {
             try? await container.stop()
             try? manager.delete(name)

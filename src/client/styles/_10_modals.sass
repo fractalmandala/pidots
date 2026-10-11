@@ -1,0 +1,149 @@
+.modal-backdrop
+	position: fixed
+	inset: 0
+	background: #34394d30
+	backdrop-filter: blur(4px)
+	display: flex
+	align-items: center
+	justify-content: center
+	padding: 24px
+	z-index: 100
+.modal
+	position: relative
+	width: 100%
+	max-width: 460px
+	background: #fffefc
+	border: 1px solid #eeece8
+	border-radius: 8px
+	padding: 36px
+	box-shadow: 0 20px 80px #30344419
+	max-height: calc(100dvh - 48px)
+	overflow: auto
+.modal h2
+	font-size: 27px
+	margin: 13px 0 8px
+.modal p.muted
+	font-size: 11px
+.modal-close
+	position: absolute
+	right: 15px
+	top: 15px
+.field-label
+	display: block
+	font-size: 11px
+	font-weight: 500
+	color: #838898
+	margin: 23px 0 8px
+.modal input,
+.modal textarea,
+.modal select
+	font-size: 12px
+.settings-row
+	display: flex
+	align-items: center
+	gap: 25px
+	padding: 21px 0
+	border-bottom: 1px solid var(--line)
+.settings-row strong
+	font-size: 12px
+	font-weight: 500
+.settings-row p
+	font-size: 10px
+	color: #999dab
+	line-height: 1.7
+	margin: 5px 0 0
+.toggle
+	border: 0
+	border-radius: 18px
+	width: 34px
+	height: 20px
+	padding: 3px
+	justify-content: flex-start
+	background: #dddee4
+	flex-shrink: 0
+.toggle span
+	height: 14px
+	width: 14px
+	border-radius: 50%
+	background: white
+	box-shadow: 0 1px 3px #0002
+.toggle.on
+	background: #8b9cdb
+	justify-content: flex-end
+.toggle.on:hover:not(:disabled)
+	background: #758acc
+.config-note
+	background: #f5f4f8
+	border: 1px solid #eeecf4
+	border-radius: 8px
+	padding: 14px
+	margin: 22px 0
+.config-note strong
+	font-size: 11px
+	font-weight: 500
+	color: #9690aa
+.config-note p
+	font-size: 10px
+	color: #a2a0ad
+	line-height: 1.7
+	margin: 7px 0
+.config-note a
+	font-size: 10px
+	color: #919ec3
+	display: flex
+	align-items: center
+	gap: 3px
+.muted
+	color: #999eaa
+	font-size: 12px
+.secondary-button
+	display: inline-flex
+	align-items: center
+	gap: 6px
+	font-size: 11px
+	padding: 7px 12px
+	background: #fffefc
+	color: #5d6275
+	border: 1px solid #e3e2e8
+	border-radius: 8px
+.secondary-button:hover:not(:disabled)
+	background: #f5f4f8
+.config-note .secondary-button
+	margin-top: 4px
+.setup-providers
+	display: inline-flex
+	align-items: center
+	gap: 6px
+	margin: 4px 0 10px
+	padding: 7px 12px
+	border-radius: 8px
+.modal.modal-wide
+	max-width: 900px
+.modal.providers-modal
+	max-width: 1024px
+.providers-grid
+	display: grid
+	grid-template-columns: repeat(3, minmax(0, 1fr))
+	gap: 0 22px
+	align-items: start
+.providers-modal .field-label,
+.settings-modal .field-label
+	margin: 14px 0 6px
+.providers-modal h2,
+.settings-modal h2
+	margin: 8px 0 4px
+.settings-modal form
+	display: grid
+	grid-template-columns: repeat(2, minmax(0, 1fr))
+	gap: 0 28px
+	align-items: start
+.settings-modal form > button.primary,
+.settings-modal form > .chat-error
+	grid-column: 1 / -1
+@media (max-width: 1060px)
+	.providers-grid
+		grid-template-columns: repeat(2, minmax(0, 1fr))
+@media (max-width: 760px)
+	.providers-grid,
+	.settings-modal form
+		grid-template-columns: 1fr

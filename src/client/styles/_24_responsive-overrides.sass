@@ -1,0 +1,40 @@
+@media (max-width: 1100px)
+	.template-app .chat-workspace.split > .result-pane
+		top: 64px
+		width: min(600px, 100vw)
+@media (max-width: 700px)
+	.template-app.app .workspace,
+	.template-app.app.nav-collapsed .workspace
+		margin-left: 0
+	.template-app.app .sidebar
+		left: 0
+		width: 252px
+	.template-app .topbar
+		padding: 0 15px 0 48px
+	.template-app .new-conversation
+		padding: 20px 18px
+	.template-app .live-chat
+		padding: 16px
+	.template-app .chat-persona
+		padding-top: 32px
+	.template-app .chat-workspace.split > .result-pane
+		width: 100%
+	.template-app .starter-suggestions
+		flex-wrap: wrap
+	.template-app .setup-card
+		margin-top: 30px
+@media (max-width: 700px)
+	.template-app.app .sidebar
+		transform: translateX(-100%)
+		transition: none
+		visibility: hidden
+	.template-app.app .sidebar.open
+		transform: translateX(0)
+		visibility: visible
+	.template-app .mobile-menu
+		position: fixed
+		display: flex
+		top: 14px
+		left: 10px
+		z-index: 20
+		color: #333

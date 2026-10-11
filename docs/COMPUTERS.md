@@ -28,7 +28,8 @@ Inside the VM, the computer service (`src/computer-agent/`) also checks a per-Do
 
 ## Isolation and guarantees
 
-- **Strong isolation:** each computer is its own lightweight VM with its own kernel. Nothing on the Mac is shared except a **read-only** folder with the computer service code (`/opt/pidots`).
+- **Strong isolation:** each computer is its own lightweight VM with its own kernel. Nothing on the Mac is shared except a **read-only** folder with the computer service code (`/opt/pidots`) and any **shared folders** the owner chose for that Dot (below).
+- **Shared folders:** the owner can share any number of folders or files from their Mac with a Dot (Computer panel → **Folders**). Each is mounted **read-write** into that Dot's VM only, at the **same absolute path** (so `/Users/me/project` is `/Users/me/project` inside), and changes are the owner's real files. Paths that would cover system folders in the VM (`/`, `/usr`, `/opt`, `/home`, `/etc`, …; see `reservedComputerPaths`) are refused. Mounts are fixed at boot, so adding or removing one restarts a running computer.
 - **Unprivileged:** the Dot's commands and browser run as user `dot` (uid 1001, no sudo, `/etc/shadow` unreadable). Its workspace is `/home/dot/workspace`.
 - **Private per Dot:** each Dot has its own disk, VM, relay port and token. Files are not shared between Dots.
 - **Network:** the VM has full internet access (vmnet shared NAT) so Dots can browse. **There is no allow-list yet** (see Future work).
@@ -60,33 +61,33 @@ It prints `PIDOTS_COMPUTERS_PORT=<port>` once listening, logs to stderr (the she
 
 **Supervisor API** (loopback only; every request needs `Authorization: Bearer <supervisorToken>`; Dot ids must match `^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$`):
 
-| Request                      | Response                                                                                                         |
-| ---------------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| `GET /computers`             | `{ computers: [entry…] }`                                                                                        |
-| `GET /computers/:id`         | entry                                                                                                            |
-| `POST /computers/:id/ensure` | entry. Starts the computer, creating it first if needed. **Answers at once**; setup continues in the background. |
-| `POST /computers/:id/stop`   | entry (disk kept)                                                                                                |
-| `POST /computers/:id/delete` | entry (VM stopped, disk and metadata removed)                                                                    |
+| Request                      | Response                                                                                                                                                                                       |
+| ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GET /computers`             | `{ computers: [entry…] }`                                                                                                                                                                      |
+| `GET /computers/:id`         | entry                                                                                                                                                                                          |
+| `POST /computers/:id/ensure` | entry. Body `{ mounts?: [{ source, destination }] }` (shared folders for this boot). Starts the computer, creating it first if needed. **Answers at once**; setup continues in the background. |
+| `POST /computers/:id/stop`   | entry (disk kept)                                                                                                                                                                              |
+| `POST /computers/:id/delete` | entry (VM stopped, disk and metadata removed)                                                                                                                                                  |
 
 An entry is `{ botId, container: "pidots-computer-<id>", status, port?, message? }`, where `status` is `stopped`, `preparing` (with a `message` describing progress), `running` (with the relay `port`) or `failed` (with a `message`).
 
 **Lifecycle in `Provider`:**
 
 1. **Manager** (first use): create `VmnetNetwork()` and a `ContainerManager` with the bundled kernel and the init image `ghcr.io/apple/containerization/vminit:0.49.0` (pulled into `store/`).
-2. **Template** (once per `templateVersion`, currently `base-v1`):
+2. **Template** (once per `templateVersion`, currently `base-v2`):
    - pull the base image `node:24-bookworm-slim` **by digest**;
-   - unpack it into a journaled 32 GiB sparse ext4 (`EXT4Unpacker(journal: .default)`);
+   - unpack it into a journaled 4 GiB sparse ext4 (`EXT4Unpacker(journal: .default)`);
    - boot a builder VM and run `installScript`: Chromium, fonts, CA certificates, curl, git, python3, procps, and the user `dot` with its workspace;
-   - move the result to `templates/base-v1.ext4`.
+   - move the result to `templates/base-v2.ext4`.
 
    The template is never modified afterwards. Concurrent first boots share one build (`templateTask`).
 
 3. **Disk** (once per Dot): `clonefile()` the template to `dots/<id>/rootfs.ext4`. This is an APFS copy-on-write clone, so a new Dot costs a few MB until it changes things.
 4. **Boot** (`start`):
    - create the framework's container folder (it must exist before `create(rootfs:)`);
-   - create the VM: 2 vCPUs, 2 GiB, vmnet interface with the gateway as DNS, a read-only virtio-fs share of the agent folder at `/opt/pidots`, and a Unix socket relayed **out of** the guest (`/run/pidots/agent.sock`) to `/tmp/pidots-<uid>/<hash>.sock`;
+   - create the VM: 2 vCPUs, 2 GiB, vmnet interface with the gateway as DNS, a read-only virtio-fs share of the agent folder at `/opt/pidots`, a read-write virtio-fs share for each shared folder (parents first), and a Unix socket relayed **out of** the guest (`/run/pidots/agent.sock`) to `/tmp/pidots-<uid>/<hash>.sock`;
    - start it; as root, create `/run/pidots` owned by `dot`;
-   - start the service as uid 1001: `node /opt/pidots/agent.mjs` with `PIDOTS_DOT_ID`, `PIDOTS_TOKEN` (the derived per-Dot token), `PIDOTS_SOCKET` and `PIDOTS_CHROMIUM`;
+   - start the service as uid 1001: `node /opt/pidots/agent.mjs` with `PIDOTS_DOT_ID`, `PIDOTS_TOKEN` (the derived per-Dot token), `PIDOTS_SOCKET`, `PIDOTS_CHROMIUM` and `PIDOTS_SHARED` (the shared folder paths, one per line);
    - wait until the service **answers an authenticated `GET /control` with 200** (`serviceAnswers`). The host socket file appears as soon as the VM starts, so its existence proves nothing;
    - start a `Relay` on 127.0.0.1 and report `running` with its port.
 5. **Shutdown**: stop the relay, send SIGTERM to the service, stop the VM, delete the framework container, release the network interface, and remove the socket.
@@ -101,7 +102,7 @@ Bundled by `desktop/scripts/bundle-agent.mjs` into `dist/computer-agent/agent.mj
 | ------------ | ------------------------------------------------------------------------------------------------------------------ |
 | `main.ts`    | Entry point; reads `PIDOTS_*`, listens on the Unix socket (mode 0600), then removes the token from the environment |
 | `server.ts`  | HTTP routes, token check, body limit (1.1 MB), error mapping                                                       |
-| `files.ts`   | `Workspace`: list, read and write confined to the workspace                                                        |
+| `files.ts`   | `Workspace`: list, read and write confined to the workspace and shared folders                                     |
 | `exec.ts`    | `runCommand`: `/bin/sh -c` in the workspace, with timeout and output cap                                           |
 | `browser.ts` | `Browser`: Playwright driving `/usr/bin/chromium` with a persistent profile in `~/.pidots/browser`                 |
 | `control.ts` | `Control`: owner takeover state machine                                                                            |
@@ -134,7 +135,7 @@ Bundled by `desktop/scripts/bundle-agent.mjs` into `dist/computer-agent/agent.mj
 
 **File safety (`files.ts`):**
 
-- paths must be relative with no `..`;
+- paths are relative to the workspace, or absolute inside a shared folder (`403` otherwise), with no `..`;
 - every component is checked with `lstat` and **symlinks are refused**;
 - files are opened with `O_NOFOLLOW`;
 - writes `fsync` and verify the final size.
@@ -150,12 +151,13 @@ The single policy point. All Dot tools and panel actions go through it.
 - **Permissions** per Dot (`computer_permissions` table): `enabled`, `browser`, `files`, `shell`, all **off by default**.
   - `allowed()` maps the action to a kind (`exec` → shell, `files_*` → files, everything else → browser) and checks before the call, **every 50 ms during it** (aborting if revoked), and after it.
   - Human actions are owner-only. Agents are refused while the workspace is paused.
+- **Shared folders** (`computer_folders` table): `addFolders` resolves each path with `realpath`, refuses missing paths and ones covering reserved guest paths, records `share_folder` / `unshare_folder` in the audit, and restarts a running computer. `start` sends the folders that still exist as `mounts`. File actions with an absolute path must be inside a shared folder (`inSharedFolder`), otherwise they are refused before reaching the VM. The prompt lists the shared paths so the Dot knows where to look.
 - **Audit:** every action is recorded as `begin` / `finish(succeeded|failed)`, and the last 50 are shown in the panel. Storage is bounded to 1 000 finished entries per Dot.
 - **Endpoint check:** a running computer must report container `pidots-computer-<id>` and a `127.0.0.1` URL on its own port, while the supervisor itself is on `127.0.0.1`. Anything else gives "Computer endpoint is not bound to this Dot."
 - **Responses:** capped at 4 MB, redirects refused, a 70 s deadline, and any echo of a token is redacted.
 - **Lifecycle:** `start` (accepts `preparing`), `stop`, `delete`, `control(take|release)`. `status()` maps provider states to `ComputerStatus.state`: `not_configured`, `stopped`, `preparing` (with `progress`), `running`, `unavailable`.
 
-Routes (`computer-routes.ts`): `GET /api/dots/:id/computer`; `PATCH …/permissions`; `POST …/start|stop|delete|take|release`; `POST …/actions { action, input }`.
+Routes (`computer-routes.ts`): `GET /api/dots/:id/computer`; `PATCH …/permissions`; `POST …/start|stop|delete|take|release`; `POST …/actions { action, input }`; `POST …/folders/pick { kind: 'directory' | 'file' }` (shows the macOS open panel via `osascript`, see `folder-picker.ts`; cancelling adds nothing); `POST …/folders { path }`; `POST …/folders/remove { path }`.
 
 ### 4. Shell wiring: `desktop/src/computers.rs`
 
@@ -173,7 +175,7 @@ Routes (`computer-routes.ts`): `GET /api/dots/:id/computer`; `PATCH …/permissi
 - **`ComputerPanel.tsx`:**
   - status, setup progress while `preparing` (polling every 4 s while running or preparing);
   - the live screen (screenshot) with take-over;
-  - Files, Terminal and Activity tabs;
+  - Folders (shared folders from the Mac: list, **Add folder…**, **Add file…**, Browse, remove), Files, Terminal and Activity tabs;
   - permissions;
   - Start, Stop and **Delete** (confirmation dialog).
 - **`ProvidersDialog.tsx` → Computers:** "Where computers run": Built-in or a custom service (only offered when the app provides built-in computers).
@@ -183,7 +185,7 @@ Routes (`computer-routes.ts`): `GET /api/dots/:id/computer`; `PATCH …/permissi
 | Path                          | What                                                                                        | Size                          |
 | ----------------------------- | ------------------------------------------------------------------------------------------- | ----------------------------- |
 | `store/`                      | Image store (vminit, base image blobs) and `initfs.ext4`                                    | ≈ 1 GB                        |
-| `templates/base-v1.ext4`      | Shared template (sparse)                                                                    | ≈ 1.4 GB used                 |
+| `templates/base-v2.ext4`      | Shared template (sparse)                                                                    | ≈ 1.4 GB used                 |
 | `dots/<id>/rootfs.ext4`       | Each Dot's disk (copy-on-write clone)                                                       | grows with that Dot's changes |
 | `state.json`                  | `{ version: 1, template, computers: { id: { createdAt, template } } }`                      | —                             |
 | `secrets.json`, `server.json` | Per-launch tokens (0600)                                                                    | —                             |

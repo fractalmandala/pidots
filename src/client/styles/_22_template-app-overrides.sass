@@ -1,0 +1,178 @@
+:root
+	--ink: #242424
+	--muted: #707070
+	--line: #e7e7e7
+	--blue: #282828
+	--blue-dark: #111
+	--lavender: #f1f1f1
+	background: #fff
+.template-app
+	background: #fff
+.template-app.app .sidebar
+	left: 0
+	width: 320px
+	background: #f9f9f9
+	padding: 0
+	border-right: 1px solid var(--line)
+.template-app.app .workspace
+	margin-left: 320px
+	background: #fff
+.template-app.app.nav-collapsed .workspace
+	margin-left: 0
+.template-app .wordmark
+	font-size: 16px
+	letter-spacing: -0.5px
+	padding: 0 10px
+	margin-bottom: 23px
+.template-app .wordmark-dot
+	display: none
+.template-app .nav-item,
+.template-app .dot-nav,
+.template-app .space-title,
+.template-app .thread-item
+	font-size: 13px
+.template-app .nav-label
+	font-size: 12px
+	letter-spacing: 0
+	text-transform: none
+	color: #767676
+.template-app .new-chat
+	background: transparent
+	border: 0
+	color: #252525
+.template-app .sidebar-bottom
+	border-top: 1px solid var(--line)
+	padding-top: 10px
+.template-app .version,
+.template-app .mode-badge,
+.template-app .connection-note,
+.template-app .composer-bottom > span
+	display: none
+.template-app .sidebar-empty
+	font-size: 12px
+	color: #777
+	line-height: 1.6
+.template-app .topbar
+	height: 64px
+	padding: 0 22px
+	background: #fff
+	border-bottom: 1px solid var(--line)
+.template-app .breadcrumbs
+	font-size: 13px
+.template-app .top-actions
+	gap: 15px
+.template-app .pause-button
+	font-size: 12px
+.template-app .chat-workspace
+	height: calc(100dvh - 64px)
+	min-height: 0
+.template-app .new-conversation
+	display: flex
+	flex-direction: column
+	height: 100%
+	max-width: 800px
+	padding: 25px 38px 28px
+.template-app .empty-chat-persona
+	text-align: center
+	margin-bottom: 25px
+.template-app .empty-chat-persona .mascot
+	width: 68px
+	height: 68px
+	margin: 0 auto 4px
+.template-app .empty-chat-persona h2
+	font-size: 17px
+	margin-bottom: 6px
+.template-app .empty-chat-persona p
+	font-size: 13px
+	color: #777
+	max-width: 420px
+	margin: 0 auto 8px
+.template-app .empty-chat-persona .text-button
+	font-size: 12px
+.template-app .setup-card
+	background: #fafafa
+	border-color: #e5e5e5
+	margin: auto 0 20px
+.template-app .setup-card p,
+.template-app .setup-card strong
+	font-size: 13px
+.template-app .setup-card a
+	font-size: 12px
+	color: #333
+	text-decoration: underline
+.template-app .composer
+	margin-top: auto
+	border: 1px solid #dedede
+	border-radius: 12px
+	box-shadow: 0 3px 14px #00000006
+	background: #fff
+.template-app .composer textarea,
+.template-app .chat-composer textarea
+	font-size: 14px
+.template-app .starter-suggestions
+	margin-top: 12px
+	gap: 8px
+.template-app .starter-suggestions button
+	font-size: 12px
+	background: #fff
+.template-app .send-button
+	background: #292929
+	color: white
+	border-radius: 50%
+.template-app .live-chat
+	padding: 18px 35px 22px
+	max-width: 850px
+.template-app .chat-persona
+	justify-content: center
+	flex-wrap: wrap
+	padding-bottom: 20px
+	border-bottom: 0
+	min-height: 94px
+.template-app .chat-persona > .mascot
+	width: 50px
+	height: 50px
+.template-app .chat-persona strong
+	font-size: 14px
+.template-app .chat-persona span
+	font-size: 12px
+	color: #777
+.template-app .chat-persona .chat-persona-actions
+	position: absolute
+	right: 0
+	top: 0
+	gap: 2px
+.template-app .chat-bubble
+	font-size: 14px
+	line-height: 1.75
+.template-app .chat-bubble.assistant
+	color: #373737
+.template-app .chat-bubble.user
+	background: #3d7e75
+	box-shadow: none
+.template-app .chat-welcome h1
+	font-size: 24px
+	font-weight: 500
+.template-app .chat-welcome .eyebrow
+	display: none
+.template-app .chat-welcome p
+	font-size: 13px
+	color: #777
+.template-app .chat-composer
+	border-radius: 12px
+	border-color: #dedede
+	background: #fff
+	box-shadow: 0 3px 14px #00000006
+.template-app .chat-workspace > .result-pane
+	width: clamp(390px, 40vw, 660px)
+	background: #fafafa
+.template-app .pane-header
+	padding: 12px 16px
+	height: 56px
+	background: #fafafa
+.template-app .pane-tabs button
+	font-size: 13px
+	color: #666
+	padding: 7px 9px
+.template-app .pane-tabs .selected
+	color: #222
+	background: #ededed

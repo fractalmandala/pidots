@@ -1,0 +1,176 @@
+.live-chat
+	height: 100%
+	max-width: 850px
+	display: flex
+	flex-direction: column
+	margin: 0 auto
+	padding: 20px 40px 17px
+.chat-persona
+	display: flex
+	align-items: center
+	gap: 6px
+	position: relative
+	padding-bottom: 17px
+	border-bottom: 1px solid #eeedea
+.chat-persona .mascot
+	width: 56px
+	height: 56px
+.chat-persona > div
+	display: flex
+	flex-direction: column
+	gap: 4px
+.chat-persona strong
+	font-size: 13px
+	font-weight: 550
+.chat-persona span
+	font-size: 11px
+	color: #5c665e
+.chat-persona .chat-persona-actions
+	flex-direction: row
+	margin-left: auto
+	gap: 8px
+.chat-transcript
+	overflow: auto
+	flex: 1
+	padding: 29px 0
+	min-height: 100px
+	scrollbar-width: thin
+	scrollbar-color: #dedfe4 transparent
+	display: flex
+	flex-direction: column
+	gap: 22px
+.chat-bubble
+	font-size: 12px
+	line-height: 1.95
+	overflow-wrap: anywhere
+.chat-bubble p
+	margin: 0 0 12px
+	line-height: 1.95
+.chat-bubble p:last-child
+	margin: 0
+.chat-bubble.user
+	align-self: flex-end
+	max-width: 79%
+	background: #35766f
+	color: white
+	padding: 11px 16px
+	border-radius: 8px 8px 4px 8px
+	box-shadow: 0 2px 4px #478b8710
+.chat-bubble.scheduled
+	border: 1px solid #8ab8b2
+.scheduled-message-label
+	display: block
+	margin-bottom: 3px
+	color: #fff
+	font-size: 10px
+	font-weight: 600
+	line-height: 1.4
+.chat-bubble.assistant
+	align-self: flex-start
+	max-width: 100%
+	padding: 6px 3px
+	color: #717787
+.chat-bubble.assistant h1,
+.chat-bubble.assistant h2,
+.chat-bubble.assistant h3
+	font-size: 16px
+	line-height: 1.5
+.chat-bubble.assistant ul,
+.chat-bubble.assistant ol
+	padding-left: 18px
+.chat-bubble a
+	text-decoration: underline
+	text-underline-offset: 3px
+.chat-bubble pre
+	white-space: pre-wrap
+	background: #efeff2
+	padding: 13px
+	border-radius: 4px
+.chat-welcome
+	text-align: center
+	margin: 60px auto
+	max-width: 440px
+.chat-welcome h1
+	font-size: 30px
+	margin: 15px 0
+.chat-welcome > p
+	font-size: 12px
+	color: #969dab
+	line-height: 1.9
+.call-receipt
+	align-self: flex-end
+	background: #e5f1ef
+	color: #6e9d98
+	padding: 10px 13px
+	border-radius: 8px 8px 4px 8px
+	font-size: 10px
+	display: flex
+	gap: 7px
+	align-items: center
+	flex-wrap: wrap
+	max-width: 85%
+.call-receipt small
+	flex-basis: 100%
+	font-size: 9px
+	line-height: 1.7
+	color: #ab9189
+.chat-composer
+	border-top: 1px solid #ebece9
+	padding-top: 13px
+	margin-top: auto
+.chat-compose-row
+	display: flex
+	align-items: flex-end
+	gap: 9px
+.chat-compose-row textarea
+	border: 0
+	background: transparent
+	padding: 10px 3px
+	resize: none
+	font-size: 12px
+	min-height: 43px
+	max-height: 120px
+.chat-compose-row textarea::placeholder
+	color: #b1b3be
+.chat-compose-row .send-button
+	background: #75b9b4
+	border-radius: 50%
+	flex-shrink: 0
+	width: 30px
+	height: 30px
+	margin-bottom: 5px
+.chat-compose-row .icon-button
+	margin-bottom: 5px
+.chat-compose-note
+	font-size: 11px
+	color: #606b63
+	text-align: center
+	margin-top: 12px
+.source-input
+	display: flex
+	align-items: center
+	gap: 6px
+	background: #eff2f4
+	border-radius: 4px
+	padding: 4px 7px
+	margin-bottom: 8px
+	color: #8ba6b1
+.source-input input
+	border: 0
+	background: transparent
+	font-size: 10px
+	padding: 8px
+.chat-error
+	font-size: 11px
+	line-height: 1.8
+	background: #faeee8
+	color: #b18473
+	padding: 12px
+	border-radius: 4px
+	display: flex
+	align-items: center
+	justify-content: space-between
+	gap: 10px
+.chat-error button
+	font-size: 10px
+	padding: 5px 9px

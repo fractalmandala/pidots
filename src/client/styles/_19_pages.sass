@@ -1,0 +1,167 @@
+.space-open
+	background: none
+	border: 0
+	color: inherit
+	text-align: left
+	flex: 1
+	cursor: pointer
+	font: inherit
+.space-workspace
+	display: flex
+	flex: 1
+	min-height: 0
+	overflow: hidden
+.page-tree
+	width: 215px
+	flex-shrink: 0
+	padding: 24px 12px
+	background: #f5f5f1
+	border-right: 1px solid var(--border)
+	overflow: auto
+.page-tree-heading
+	display: flex
+	align-items: center
+	justify-content: space-between
+	padding: 0 10px
+.page-tree > p
+	font-size: 12px
+	color: #858a87
+	line-height: 1.6
+	padding: 0 10px
+.page-tree-item
+	display: flex
+	gap: 8px
+	align-items: center
+	width: 100%
+	border: 0
+	border-radius: 4px
+	background: none
+	color: #616761
+	text-align: left
+	padding-top: 10px
+	padding-bottom: 10px
+	cursor: pointer
+.page-tree-item span
+	overflow: hidden
+	text-overflow: ellipsis
+	white-space: nowrap
+.page-tree-item.active
+	background: #e4eeea
+	color: #2e6053
+.page-document
+	flex: 1
+	min-width: 0
+	display: flex
+	flex-direction: column
+	padding: 24px 40px
+	overflow: auto
+	background: #fffefa
+.page-toolbar
+	display: flex
+	align-items: center
+	gap: 12px
+	margin-bottom: 35px
+.page-toolbar span
+	flex: 1
+	color: #8a8c83
+	font-size: 12px
+.page-toolbar button,
+.page-meta button,
+.page-chat-launch button,
+.page-chat-close
+	display: inline-flex
+	align-items: center
+	gap: 6px
+	background: white
+	border: 1px solid #dfe3dd
+	border-radius: 4px
+	padding: 8px 10px
+	color: #44675b
+	cursor: pointer
+	font-size: 12px
+.page-toolbar button:disabled,
+.page-chat-launch button:disabled
+	opacity: 0.45
+	cursor: default
+.page-title-input
+	width: 100%
+	border: 0
+	background: transparent
+	font-size: 34px
+	font-weight: 600
+	letter-spacing: -1px
+	padding: 8px 0
+	color: #30372f
+	outline: none
+.page-meta
+	display: flex
+	align-items: center
+	gap: 16px
+	margin: 14px 0 25px
+	color: #83897f
+	font-size: 12px
+.page-meta select,
+.page-chat-launch select
+	border: 1px solid #e0e4dc
+	border-radius: 4px
+	padding: 7px
+	max-width: 200px
+	background: white
+	color: #4e6254
+.page-content-editor
+	width: 100%
+	min-height: 340px
+	flex: 1
+	resize: vertical
+	border: 0
+	background: transparent
+	outline: none
+	line-height: 1.85
+	font-size: 15px
+	color: #464d43
+	padding: 8px 0
+.page-preview
+	min-height: 340px
+	flex: 1
+	line-height: 1.85
+	overflow-wrap: anywhere
+.page-preview pre
+	overflow: auto
+.page-chat-launch
+	display: flex
+	align-items: center
+	flex-wrap: wrap
+	gap: 10px
+	border-top: 1px solid #e6e8e0
+	padding-top: 18px
+	margin-top: 25px
+.page-chat-launch small
+	width: 100%
+	color: #8a8e84
+	font-size: 11px
+.page-empty
+	margin: auto
+	max-width: 390px
+	color: #737d70
+	line-height: 1.7
+.page-empty h1
+	color: #354030
+	font-size: 30px
+	line-height: 1.25
+.page-chat-panel
+	display: flex
+	flex-direction: column
+	width: 370px
+	flex-shrink: 0
+	min-height: 0
+	border-left: 1px solid #e0e5de
+	background: white
+.page-chat-panel .chat-persona
+	padding: 18px
+.page-chat-panel .chat-transcript
+	padding: 20px
+.page-chat-panel .chat-composer
+	margin: 12px
+.page-chat-close
+	margin: 8px 12px 0
+	align-self: flex-end

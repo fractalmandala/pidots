@@ -14,8 +14,9 @@ The app is three processes, started and stopped together by the shell:
 Pidots.app/Contents/MacOS/pidots                    GPUI Kit shell (Rust)
 ├── Resources/node server.mjs                       Node server: API, engine, broker
 │      └── WebView loads http://127.0.0.1:<port>/   React UI (served by the same server)
-└── Resources/computers/pidots-computers            Swift helper: one Linux micro-VM per Dot
-         └── VM: node /opt/pidots/agent.mjs         computer service inside each VM
+├── Resources/computers/pidots-computers            Swift helper: one Linux micro-VM per Dot
+│        └── VM: node /opt/pidots/agent.mjs         computer service inside each VM
+└── Resources/speech/pidots-speech                  Swift helper: Apple speech recognition and voices for calls
 ```
 
 | Process          | Source                | Role                                                                                                           |
@@ -24,6 +25,7 @@ Pidots.app/Contents/MacOS/pidots                    GPUI Kit shell (Rust)
 | Server           | `src/server/`         | HTTP API, the Pi engine, provider settings, pages, connections, voice, and the computer broker. Serves the UI. |
 | UI               | `src/client/`         | React app shown in the WebView.                                                                                |
 | Computer helper  | `desktop/computers/`  | Runs VMs with Apple's Containerization framework. Decides nothing about access.                                |
+| Speech helper    | `desktop/speech/`     | Apple speech recognition (mic to text) and AVSpeechSynthesizer voices. Started by the server, not the shell.   |
 | Computer service | `src/computer-agent/` | Runs inside each VM: terminal, files, browser.                                                                 |
 
 **Lifetime rule.** The shell holds each child's **stdin** open. When the shell exits for any reason, including a crash or kill, the pipe closes and both children shut down: the server stops, and the helper stops every VM. Never add a long-lived child process without the same rule.
@@ -80,7 +82,8 @@ src/server/            Node server
   computer-*.ts        computer broker, routes, tools, audit store
   connection*.ts       MCP connections and approvals
   page*.ts, pages.ts   pages and page tools
-  voice.ts             realtime voice calls (OpenAI realtime API)
+  voice.ts             voice calls: each heard utterance becomes a turn, and the reply is spoken
+  speech.ts            runs pidots-speech (stdio JSON), one process per call
   runner.ts, store.ts  scheduled tasks, settings, memories
 src/client/            React UI (useThread.ts, Chat.tsx, ProvidersDialog.tsx, ComputerPanel.tsx, …)
 src/shared/            types shared by server, client and the computer service

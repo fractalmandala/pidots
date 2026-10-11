@@ -1,0 +1,143 @@
+.computer-overlay
+	top: 64px
+	width: min(660px, 100vw)
+.computer-dot-picker
+	padding: 10px 18px
+	color: #666
+.computer-dot-picker select
+	background: transparent
+	border: 0
+	font-size: 13px
+	padding: 5px
+.computer-panel
+	display: flex
+	flex-direction: column
+	gap: 0
+	padding: 14px 18px
+.computer-status
+	font-size: 12px
+	color: #666
+.computer-tool-tabs
+	display: flex
+	border-bottom: 1px solid #ddd
+	gap: 12px
+.computer-tool-tabs button
+	background: transparent
+	border: 0
+	border-bottom: 2px solid transparent
+	border-radius: 0
+	padding: 8px 2px
+	color: #6a6a6a
+.computer-tool-tabs button[aria-selected='true']
+	color: #222
+	border-bottom-color: #222
+.computer-browser
+	border-top: 0
+	padding-top: 0
+	margin-top: 5px
+.computer-browser > .computer-row
+	padding: 6px
+	background: #eeeeef
+	border-radius: 4px
+.computer-browser > .computer-row input
+	border: 0
+	background: #fafafa
+	padding: 6px 9px
+.computer-panel .computer-screen
+	border: 1px solid #e0e0e0
+	border-radius: 0 0 8px 8px
+	background: white
+.computer-current-url
+	border: 1px solid #e0e0e0
+	border-bottom: 0
+	background: #eee
+	border-radius: 8px 8px 0 0
+	color: #646464
+.computer-screen-empty
+	min-height: 280px
+	display: flex
+	align-items: center
+	justify-content: center
+	background: #fff
+	border: 1px solid #e0e0e0
+	border-radius: 4px
+	color: #777
+.computer-control-pill
+	display: flex
+	justify-content: center
+	align-items: center
+	gap: 10px
+	margin: 20px auto
+	font-size: 12px
+	background: #eee
+	padding: 5px 5px 5px 14px
+	border-radius: 12px
+	width: fit-content
+.computer-control-pill button
+	background: #222
+	color: #fff
+	border: 0
+	border-radius: 12px
+	font-size: 12px
+.computer-control-pill button:hover:not(:disabled)
+	background: #444
+.computer-settings
+	margin-top: 20px
+	border-top: 1px solid #e5e5e5
+	padding-top: 10px
+	color: #666
+.computer-human
+	border-top: 1px solid #e5e5e5
+	padding-top: 8px
+.computer-panel [hidden]
+	display: none
+.computer-folders
+	border-top: 0
+	margin-top: 5px
+.computer-folder-list
+	list-style: none
+	margin: 10px 0
+	padding: 0
+	border: 1px solid #e0e0e0
+	border-radius: 4px
+	background: #fff
+.computer-folder-list li
+	display: flex
+	align-items: center
+	gap: 10px
+	padding: 9px 10px
+	color: #555
+.computer-folder-list li + li
+	border-top: 1px solid #ececec
+.computer-folder-name
+	display: flex
+	flex: 1
+	flex-direction: column
+	min-width: 0
+	color: #222
+.computer-folder-name small
+	overflow: hidden
+	text-overflow: ellipsis
+	white-space: nowrap
+.computer-panel .computer-folder-remove
+	display: inline-flex
+	border-color: transparent
+	background: transparent
+	padding: 5px
+.computer-panel .computer-folder-remove:hover:not(:disabled)
+	background: #eee
+.computer-folder-empty
+	padding: 18px 12px
+	text-align: center
+	border: 1px dashed #d0d0d0
+	border-radius: 4px
+	color: #777
+.computer-panel .computer-folder-add
+	display: inline-flex
+	align-items: center
+	gap: 6px
+	background: #222
+	border-color: #222
+	color: #fff
+.computer-panel .computer-folder-add:hover:not(:disabled)
+	background: #444

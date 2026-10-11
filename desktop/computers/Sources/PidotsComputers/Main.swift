@@ -76,7 +76,10 @@ struct PidotsComputers {
         let id = parts[1]
         switch (request.method, parts.count == 3 ? parts[2] : "") {
         case ("POST", "ensure"):
-            return .ok(await provider.ensure(id))
+            guard let mounts = sharedMounts(request.body) else {
+                return .error(400, "Shared folders must be existing absolute paths outside system folders.")
+            }
+            return .ok(await provider.ensure(id, mounts: mounts))
         case ("POST", "stop"):
             return .ok(await provider.stop(id))
         case ("POST", "delete"):
@@ -91,6 +94,49 @@ struct PidotsComputers {
             return .error(404, "Unknown computer request.")
         }
     }
+}
+
+/// Guest paths a shared folder may never cover or replace.
+let reservedGuestPaths = [
+    "/bin", "/boot", "/dev", "/etc", "/home", "/lib", "/lib64", "/opt", "/proc",
+    "/root", "/run", "/sbin", "/sys", "/tmp", "/usr", "/var",
+]
+
+/// Parses `{ mounts: [{ source, destination }] }` from an ensure request.
+/// Sources must exist; destinations must be absolute, normalized and clear of
+/// system paths, or the VM would not boot. Returns nil if any is invalid.
+func sharedMounts(_ body: Data) -> [Provider.SharedMount]? {
+    guard !body.isEmpty else { return [] }
+    guard let json = try? JSONSerialization.jsonObject(with: body) as? [String: Any] else { return nil }
+    guard let list = json["mounts"] else { return [] }
+    guard let items = list as? [[String: Any]], items.count <= 64 else { return nil }
+    var result: [Provider.SharedMount] = []
+    for item in items {
+        guard let source = item["source"] as? String, let destination = item["destination"] as? String,
+              source.hasPrefix("/"), FileManager.default.fileExists(atPath: source),
+              destination.hasPrefix("/"), destination.count <= 1024,
+              normalized(destination),
+              !destination.contains(where: { $0.asciiValue.map { $0 < 0x20 } ?? false })
+        else { return nil }
+        let clashes = reservedGuestPaths.contains { reserved in
+            inside(destination, reserved) || inside(reserved, destination)
+        }
+        if clashes { return nil }
+        result.append(.init(source: source, destination: destination))
+    }
+    return result
+}
+
+/// True for an absolute path without empty, `.` or `..` components.
+/// (`NSString.standardizingPath` can't be used: it rewrites `/private/tmp`.)
+func normalized(_ path: String) -> Bool {
+    path.hasPrefix("/") && path.dropFirst().split(separator: "/", omittingEmptySubsequences: false)
+        .allSatisfy { !$0.isEmpty && $0 != "." && $0 != ".." }
+}
+
+/// True when `path` is `root` or inside it.
+func inside(_ path: String, _ root: String) -> Bool {
+    path == root || path.hasPrefix(root == "/" ? "/" : root + "/")
 }
 
 func constantTimeEqual(_ a: String, _ b: String) -> Bool {

@@ -1,0 +1,180 @@
+.computer-overlay
+	position: fixed
+	top: 83px
+	right: 0
+	bottom: 0
+	width: min(460px, 100vw)
+	z-index: 15
+	overflow: auto
+	box-shadow: -8px 0 28px #20263418
+	background: #fdfcfb
+.computer-overlay .result-pane
+	min-height: 100%
+.computer-panel
+	padding: 18px
+	color: #333b49
+	font-size: 13px
+	line-height: 1.5
+.computer-dot-picker
+	display: flex
+	align-items: center
+	gap: 12px
+	padding: 14px 18px
+	border-bottom: 1px solid var(--line)
+	font-size: 12px
+.computer-dot-picker select
+	flex: 1
+	min-width: 0
+.computer-panel input:not([type='checkbox']),
+.computer-panel textarea,
+.computer-panel select,
+.computer-dot-picker select
+	width: 100%
+	min-width: 0
+	border: 1px solid #c4c8d0
+	border-radius: 4px
+	padding: 8px
+	background: #fff
+	color: #273243
+	font: inherit
+.computer-panel textarea
+	display: block
+	resize: vertical
+.computer-panel button
+	border: 1px solid #bac2cd
+	border-radius: 4px
+	padding: 7px 10px
+	background: #fff
+	color: #273243
+	font: inherit
+	cursor: pointer
+.computer-panel button:disabled
+	cursor: default
+	opacity: 0.5
+.computer-panel :is(input, textarea, select, button):focus-visible,
+.computer-dot-picker select:focus-visible
+	outline: 2px solid #476ba0
+	outline-offset: 2px
+.computer-panel p
+	margin: 8px 0 12px
+.computer-panel h3
+	font-size: 13px
+	margin: 0 0 10px
+.computer-panel summary
+	cursor: pointer
+	font-weight: 600
+	padding: 5px 0
+.computer-panel label
+	display: block
+	margin: 8px 0
+.computer-panel small,
+.computer-hint
+	color: #596373
+	font-size: 11px
+.computer-status,
+.computer-actions,
+.computer-row
+	display: flex
+	gap: 8px
+	align-items: center
+.computer-status
+	justify-content: space-between
+	text-transform: capitalize
+	margin-bottom: 12px
+.computer-status span
+	font-size: 11px
+.computer-actions
+	flex-wrap: wrap
+	margin: 10px 0
+.computer-row
+	margin: 10px 0
+.computer-row > input,
+.computer-row > select,
+.computer-row > label
+	flex: 1
+	min-width: 0
+.computer-row > button
+	flex-shrink: 0
+.computer-section
+	border-top: 1px solid var(--line)
+	margin-top: 18px
+	padding-top: 14px
+.computer-setup
+	background: #f0f2f6
+	padding: 14px
+	border-radius: 4px
+.computer-setup a
+	color: #345681
+.computer-permissions
+	padding: 8px 0
+.computer-permissions label
+	display: flex
+	align-items: center
+	gap: 8px
+.computer-permissions input[type='checkbox']
+	width: 16px
+	height: 16px
+	flex: 0 0 auto
+	padding: 0
+.computer-error
+	color: #a32b32
+	background: #fff0f0
+	padding: 10px
+	border-radius: 4px
+	overflow-wrap: anywhere
+.computer-current-url
+	background: #eceff3
+	padding: 7px 10px
+	overflow: hidden
+	text-overflow: ellipsis
+	white-space: nowrap
+	font-size: 11px
+.computer-panel .computer-screen
+	display: block
+	border: 0
+	border-radius: 0
+	padding: 0
+	width: 100%
+	overflow: hidden
+	line-height: 0
+.computer-panel .computer-screen:disabled
+	opacity: 1
+.computer-screen img
+	width: 100%
+	height: auto
+	display: block
+.computer-screen-empty
+	padding: 24px 12px
+	text-align: center
+	border: 1px dashed #bdc4cf
+	border-radius: 6px
+.computer-section pre
+	background: #eef0f4
+	color: #243044
+	padding: 10px
+	font-size: 11px
+	max-height: 300px
+	overflow: auto
+	white-space: pre-wrap
+	overflow-wrap: anywhere
+.computer-audit
+	list-style: none
+	padding: 0
+	margin: 8px 0
+.computer-audit li
+	padding: 8px 0
+	border-bottom: 1px solid var(--line)
+.computer-audit span
+	display: block
+	color: #596373
+	font-size: 11px
+@media (max-width: 1100px)
+	.chat-workspace.split > .result-pane
+		position: fixed
+		top: 83px
+		right: 0
+		bottom: 0
+		z-index: 15
+		width: min(460px, 100vw)
+		overflow: auto
+		box-shadow: -8px 0 28px #20263418

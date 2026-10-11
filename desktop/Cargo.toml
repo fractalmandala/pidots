@@ -1,7 +1,7 @@
 [package]
 name = "pidots-desktop"
 description = "Native macOS shell for Pidots, built with GPUI Kit and a Wry WebView."
-version = "0.1.3"
+version = "0.1.4"
 edition = "2024"
 publish = false
 license = "MIT"

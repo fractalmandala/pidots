@@ -1,0 +1,342 @@
+/* ==========================================================================
+   Canonical tokens — Pidots
+   --------------------------------------------------------------------------
+   One slot per role. Values are what the app renders TODAY, each traced to a
+   real declaration in src/client/style.css (source + use count in comments).
+
+   Scales are in px, matching current rendering exactly, so migrating a
+   declaration from a literal to a token is a pure rename with zero visual
+   delta. (The app's root is 14px; a rem-based scale would shift every value
+   by the 16/14 ratio. Convert later, deliberately, all at once.)
+
+   NAMESPACES — deliberately non-overlapping:
+     --fg-*        foreground / text COLORS          (not --text-*)
+     --bg-*        canvas surfaces
+     --border-*    borders
+     --state-*     interactive state surfaces
+     --accent-*    accent ramp (1st hue) + --accent-alt-* (2nd hue)
+     --{semantic}-fg / --{semantic}-surface   status colors
+     --text-*      TYPE SIZES
+     --line-height-*   line-heights
+     --weight-*    font-weights
+     --tracking-*  letter-spacing
+     --space-*     spacing
+     --radius-*    border-radius
+     --size-*      control sizes        --icon-*  icon sizes
+     --shadow-* / --scrim-*   elevation
+     --call-*      pinned call-view namespace (not themeable)
+
+   HOOK: :root for light, :root[data-theme='dark'] for dark — the attribute
+   src/client/theme.ts actually sets. Dark values below are marked "derived":
+   they are what src/build/dark-theme.ts emits for the light value, i.e. the
+   current rendering, so adopting this file changes nothing visually.
+
+   ORDER MATTERS: the generator clones every :root color rule into
+   :root[data-theme='dark'] and inserts the twin directly after it. A
+   hand-authored dark block only wins if it sits AFTER the light block.
+   ========================================================================== */
+
+:root {
+  color-scheme: light;
+
+  /* ======================================================================
+     FOREGROUND COLORS
+     ====================================================================== */
+  --fg-1:          #242424;  /* --ink (l.3258), 12 uses  */
+  --fg-2:          #6b6b6b;  /* .template-app --text-secondary (l.4287), 22 */
+  --fg-3:          #707070;  /* --muted (l.3259), 11    */
+  --fg-faint:      #a3a3ab;  /* .nav-label; tier also .breadcrumbs #aaa,
+                                .eyebrow #999ca8, .version #b1b1b7 — 29 uses */
+  --fg-on-inverse: #ffffff;  /* white text on --bg-inverse, 22+ uses */
+
+  /* ======================================================================
+     CANVAS SURFACES
+     ====================================================================== */
+  --bg:            #ffffff;  /* :root background (l.3264) / .template-app */
+  --bg-surface:    #fafafa;  /* near-white tier, 31 uses (.ready-pill #fdfcf9,
+                                #f5f4f8) */
+  --bg-sunken:     #f4f4f9;  /* tinted tier, 38 uses (button:hover, .composer) */
+  --bg-raised:     #ffffff;  /* cards/modals: white + shadow, 27 uses */
+  --bg-button:     #f0f1f6;  /* .new-chat.nav-item fill (l.2093) */
+  --bg-inverse:    #292929;  /* .template-app .send-button; also
+                                .dotted-logo i:first-child #42485d */
+
+  /* ======================================================================
+     BORDERS
+     ====================================================================== */
+  --border:        #e0e0e0;  /* main line tier, 30 uses (#e5e5e5, #ddd) */
+  --border-subtle: #e9e8e6;  /* --line (l.3260) — 21 uses */
+  --border-strong: #c4c8d0;  /* strong tier: #bac2cd, #bdc4cf */
+  --border-inverse: #222222; /* 2 uses on dark fills */
+
+  /* ======================================================================
+     INTERACTIVE STATE SURFACES
+     ====================================================================== */
+  --state-surface:  #f0f1f6; /* filled pills / rows */
+  --state-hover:   #f4f4f9;  /* button:hover:not(:disabled) (l.60) — same as
+                                --bg-sunken today; themes should split these */
+  --state-selected: #eeeff7; /* .nav-item.active (l.230) */
+
+  /* ======================================================================
+     ACCENT RAMP (hue 1)
+     ----------------------------------------------------------------------
+     66 chromatic uses across 4 lightness steps, in four roles — text (48!),
+     background (11), focus outline (6), border (1). Five slots, not three.
+     In light mode the app is in its "ink" generation: --accent is dark gray,
+     and the three tint/ring/text slots are lavender-era leftovers (flagged,
+     not normalized).
+     ====================================================================== */
+  --accent:        #242424;  /* .template-app --accent (l.4285) */
+  --accent-strong: #000000;  /* --accent-hover (l.4286) */
+  --accent-soft:   #a1addc;  /* .wordmark-dot (l.118) */
+  --accent-ring:   #b8c4fa;  /* button/a/input:focus-visible outline (l.67) */
+  --accent-fg:     #596aa9;  /* .nav-item.active color (l.231) */
+
+  /* ======================================================================
+     ACCENT RAMP (hue 2) — 14 uses, no slot in the original schema
+     .chat-bubble.user, .send-button, .online-dot, .ready-pill, .mode-badge.live.
+     Carries its own on-color tier (used as background with light text).
+     ====================================================================== */
+  --accent-alt:      #3d7e75; /* .template-app .chat-bubble.user */
+  --accent-alt-fg:   #35766f; /* .page-chat-context a; pre-ink .chat-bubble.user */
+  --accent-alt-soft: #e4eeea; /* .page-tree-item.active background */
+  --accent-alt-ring: #75b9b4; /* .chat-compose-row .send-button, lavender-era */
+
+  /* ======================================================================
+     STATUS — color / readable text / tinted surface
+     (each is used all three ways; "color + hover" was the wrong axis)
+     ====================================================================== */
+  --danger-fg:      #ac7367; /* .error-banner color */
+  --danger:         #a33e35; /* dots (.history-dot.failed #c39b8e) */
+  --danger-surface: #fbede9; /* .error-banner bg (.task-error #faeeea) */
+
+  --success:        #648568; /* .mode-badge.live color */
+  --success-fg:     #7a967e; /* .status.completed color */
+  --success-surface: #eff4ee; /* .status.completed background */
+
+  --warning:        #aa9776; /* .status.paused color */
+  --warning-fg:     #aa9776; /* suggestion icons #b6a17b/#ad9b82 (tan tier) */
+  --warning-surface: #f7f3eb; /* .status.paused background */
+
+  --info:           #596aa9; /* computer links #345681, selected text */
+  --info-surface:   #edf0f9; /* .status.completed (blue generation) */
+
+  /* ======================================================================
+     TYPE SIZES — 30 px values in the wild; 13 steps cover 93% of uses
+     ratio ~1.11 below 12px, ~1.4 above it (dense UI + display)
+     ====================================================================== */
+  --text-2xs:  7px;   /* 6   .version                          */
+  --text-xs:   8px;   /* 18  .eyebrow, .mode-badge, .composer-footnote */
+  --text-sm:   9px;   /* 30  .nav-label, .count, .suggestion p  */
+  --text-md:   10px;  /* 38  .breadcrumbs, .nav-item small      */
+  --text-bs:   11px;  /* 49  dense body — BASE                 */
+  --text-lg:   12px;  /* 61  main UI text — WORKHORSE          */
+  --text-xl:   13px;  /* 13  .profile-label strong             */
+  --text-2xl:  14px;  /*  7  :root                             */
+  --text-3xl:  15px;  /*  6                                     */
+  --text-4xl:  18px;  /*  4  display                           */
+  --text-5xl:  24px;  /*  4                                     */
+  --text-6xl:  27px;  /*  4  .wordmark, .modal h2, .task-title */
+  --text-7xl:  34px;  /*  3  .page-heading h1                  */
+  /* kept literal on purpose (18 uses, 17 values — genuinely one-off):
+     16 17 19 20 22 23 25 26 28 30 31 33 35 37 39 43 47 */
+
+  --line-height-display: 1.2;  /* 2 uses (headings) */
+  --line-height-tight:   1.4;  /* 2 */
+  --line-height-normal:  1.6;  /* 10 (.composer textarea) */
+  --line-height-relaxed: 1.7;  /* 10 (p, .dot-note) */
+  --line-height-loose:   1.8;  /* 10 (.sidebar-empty) */
+  --line-height-extra:   1.95; /* 2 */
+
+  --weight-normal:   400;  /* body */
+  --weight-medium:   500;  /* emphasis */
+  --weight-heading:  550;  /* h1-h3 (l.100) — SF Pro variable-font step */
+  --weight-bold:     600;  /* micro labels, .profile-label strong */
+
+  /* Two regimes: display headings tighten (-0.04em), uppercase micro-labels
+     open up. Current caps literals are 0.8-1.7px — convert to em at
+     migration so they scale with size. */
+  --tracking-tight:  -0.04em;  /* h1-h3 (l.101) */
+  --tracking-normal: 0;        /* .version span */
+  --tracking-caps:  0.09em;    /* .eyebrow 1.7px, .nav-label 1.2px,
+                                  .mode-badge 1px, .version 0.8px */
+
+  /* ======================================================================
+     SPACING — 60 px values, 690 uses. 2px base; the 13 steps below cover
+     ~78% of uses. Everything else snaps during migration.
+     ====================================================================== */
+  --space-0:   0;
+  --space-3xs: 2px;   /* 9 */
+  --space-2xs: 3px;   /* 16 */
+  --space-xs:  4px;   /* 26 */
+  --space-sm:  6px;   /* 40 */
+  --space-md:  8px;   /* 56 */
+  --space-lg:  10px;  /* 58 */
+  --space-xl:  12px;  /* 51 */
+  --space-2xl: 14px;  /* 31 */
+  --space-3xl: 16px;  /* 29 */
+  --space-4xl: 20px;  /* 24 */
+  --space-5xl: 24px;  /* 12 */
+  --space-6xl: 32px;  /* minor */
+  /* odd gaps that collapse onto the even ladder (count, value -> step):
+     5px×31->4,  7px×29->8,  9px×19->8,  13px×27->12,  18px×30->18,
+     22px×20->22,  25px×15->24,  23px×9->24,  35px×7 / 36px×5->36 */
+
+  /* ======================================================================
+     CONTROL / ICON SIZES
+     heights found: 20 27 28 29 30 32 37 40 42 48
+     ====================================================================== */
+  --size-2xs: 20px;  /* small chips */
+  --size-xs:  24px;
+  --size-sm:  28px;  /* inline controls */
+  --size-md:  30px;  /* repeat */
+  --size-lg:  32px;  /* .send-button (5), dominant control height */
+  --size-xl:  40px;  /* .call-controls button > span */
+  --size-2xl: 48px;
+  --avatar:  46px;  /* .profile-mascot 46x50, .avatar 29px */
+
+  --icon-2xs: 12px;  /* 3 uses */
+  --icon-xs:  14px;  /* 18 uses (lucide size=14 in TSX) */
+  --icon-sm:  15px;  /* 20 uses — modal icon size */
+  --icon-md:  16px;  /* 16 uses */
+  --icon-lg:  18px;  /* 12 uses */
+  --icon-xl:  20px;  /* 3 */
+  /* icons are sized in TSX (lucide size={n}), so this is the ladder the
+     props should draw from */
+
+  /* ======================================================================
+     RADIUS — 19 values, 98 uses; ladder covers ~90%
+     ====================================================================== */
+  --radius-xs:   3px;    /* 1  */
+  --radius-sm:   4px;    /* 6  .count, .mode-badge */
+  --radius-md:   6px;    /* 7  */
+  --radius-lg:   7px;    /* 12 .nav-item */
+  --radius-xl:   8px;    /* 17 .send-button */
+  --radius-2xl:  9px;    /* 10 button, .suggestion */
+  --radius-3xl:  10px;   /* 17 .segmented */
+  --radius-4xl:  12px;   /* 5  */
+  --radius-full: 9999px; /* circles */
+  /* large-surface radii that collapse onto --radius-4xl (or stay literal):
+     13×2, 14, 16, 17×4, 18×2, 20, 22×2, 24, 25 */
+
+  /* ======================================================================
+     ELEVATION — 19 literal alpha values collapse to 6 generated tokens
+     ====================================================================== */
+  --shadow-1:        0 1px 2px #0000001a;   /* .segmented input:checked + span */
+  --shadow-2:        0 2px 4px #39394a04;   /* .suggestion */
+  --shadow-3:        0 5px 17px #39394a05;  /* .composer */
+  --shadow-overlay:  -8px 0 28px #20263418; /* .computer-overlay, .result-pane */
+  --scrim:           #34394d30;            /* .modal-backdrop */
+  --scrim-nav:       #2f34464d;            /* .nav-scrim */
+}
+
+/* ==========================================================================
+   DARK — today's values (derived), hand-author per theme later
+   ========================================================================== */
+:root[data-theme='dark'] {
+  color-scheme: dark;
+
+  --fg-1:          #c5c5c5;  /* derived; contrast 9.98 on --bg */
+  --fg-2:          #a4a4a4;  /* derived; contrast 6.91 */
+  --fg-3:          #a4a4a4;  /* derived; contrast 6.91 */
+  --fg-faint:      #a4a4aa;  /* derived; contrast 6.95 */
+  --fg-on-inverse: #141414;  /* AUTHORED: derivation gives #a4a4a4, which fails
+                                against --bg-inverse #c1c1c1. On-colors are not
+                                text colors — they must be authored per theme. */
+
+  --bg:            #1b1b1b;  /* derived: #ffffff */
+  --bg-surface:    #1e1e1e;  /* derived: #fafafa */
+  --bg-sunken:     #212124;  /* derived: #f4f4f9 */
+  --bg-raised:     #1b1b1b;  /* derived: #ffffff */
+  --bg-button:     #232327;  /* derived: #f0f1f6 */
+  --bg-inverse:    #c1c1c1;  /* derived: #292929 */
+
+  --border:        #303030;  /* derived */
+  --border-subtle: #2a2a29;  /* derived */
+  --border-strong: #3e4147;  /* derived */
+  --border-inverse: #c7c7c7; /* derived */
+
+  --state-surface:  #212124; /* derived */
+  --state-hover:   #232327;  /* derived */
+  --state-selected: #242429; /* derived */
+
+  --accent:        #c5c5c5;  /* derived */
+  --accent-strong: #eeeeee;  /* derived */
+  --accent-soft:   #495174;  /* derived */
+  --accent-ring:   #373e64;  /* derived */
+  --accent-fg:     #91a2db;  /* derived */
+
+  --accent-alt:      #5c9189; /* derived */
+  --accent-alt-fg:   #7bb1a9; /* derived */
+  --accent-alt-soft: #232a27; /* derived */
+  --accent-alt-ring: #2a625e; /* derived */
+
+  --danger:         #cd7368; /* derived */
+  --danger-fg:      #ca968b; /* derived */
+  --danger-surface: #2b2220; /* derived */
+
+  --success:        #69856c; /* derived */
+  --success-fg:     #94ac97; /* derived */
+  --success-surface: #212420; /* derived */
+
+  --warning:        #716248; /* derived */
+  --warning-fg:     #b3a286; /* derived */
+  --warning-surface: #24221d; /* derived */
+
+  --info:           #7484bb; /* derived */
+  --info-surface:   #22242a; /* derived */
+
+  --shadow-1:        0 1px 2px #0000004d;   /* alpha ×1.6, tint dropped */
+  --shadow-2:        0 2px 4px #39394a0a;   /* derived */
+  --shadow-3:        0 5px 17px #39394a0d;  /* derived */
+  --shadow-overlay:  -8px 0 28px #00000042; /* derived */
+  --scrim:           #34394d4d;            /* derived */
+  --scrim-nav:       #2f34467c;            /* derived */
+
+  /* Non-color scales are theme-independent and inherited from :root. */
+}
+
+/* ==========================================================================
+   PINNED NAMESPACE — call view (style.css l.4019-4226, /* theme: fixed */)
+   Intentionally dark, excluded from generation, not swappable by themes.
+   ========================================================================== */
+:root {
+  --call-bg:            #133d37;
+  --call-bg-raised:     #1c544c;
+  --call-bg-accent:     #367a70;
+  --call-surface:       #e0f4eb;
+  --call-surface-2:     #abf1d5;
+  --call-danger:        #c84628;
+  --call-danger-soft:   #da5636;
+
+  --call-fg:            #ffffff;
+  --call-fg-1:          #e7f5ef;
+  --call-fg-2:          #d0e7e0;
+  --call-fg-3:          #c9e8dd;
+  --call-fg-muted:      #b3d2c8;
+  --call-fg-danger:     #ffddcb;
+  --call-fg-on-accent:  #194d42;
+
+  --call-border:        #da5636;
+}
+
+/* ==========================================================================
+   TRANSITIONAL ALIASES — the legacy tokens style.css ships. Pointed at the
+   canonical slots so existing declarations keep working during migration;
+   delete this block once declarations use the canonical names.
+   ========================================================================== */
+:root {
+  --ink:      var(--fg-1);
+  --muted:    var(--fg-3);
+  --line:     var(--border-subtle);
+  --blue:     var(--accent-fg);
+  --blue-dark: var(--accent-fg);
+  --lavender: var(--state-selected);
+
+  /* --text-secondary (l.4287) is NOT aliased: the name lives in the --text-*
+     size namespace. Re-point that declaration at --fg-2 and delete it. */
+
+  /* No canonical slot yet — themes must decide: */
+  --disabled-bg:  #ececec;  /* l.4288 */
+  --disabled-ink: #9a9a9a;  /* l.4289 */
+}

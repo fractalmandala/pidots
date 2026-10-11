@@ -1,36 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ChatMessage, LiveRun, ThreadEvent } from '../shared/thread-types';
 import { api, authHeaders } from './api';
+import { readEvents } from './sse';
 
 const idle: LiveRun = { running: false, toolCalls: [] };
-
-/** Reads server-sent events from a fetch response (keeps the auth header). */
-async function readEvents(
-  response: Response,
-  onEvent: (event: ThreadEvent) => void,
-) {
-  const reader = response
-    .body!.pipeThrough(new TextDecoderStream())
-    .getReader();
-  let buffer = '';
-  for (;;) {
-    const { done, value } = await reader.read();
-    if (done) return;
-    buffer += value;
-    let boundary: number;
-    while ((boundary = buffer.indexOf('\n\n')) >= 0) {
-      const frame = buffer.slice(0, boundary);
-      buffer = buffer.slice(boundary + 2);
-      if (/^event: ping$/m.test(frame)) continue;
-      const data = frame
-        .split('\n')
-        .filter((line) => line.startsWith('data:'))
-        .map((line) => line.slice(5).trimStart())
-        .join('\n');
-      if (data) onEvent(JSON.parse(data) as ThreadEvent);
-    }
-  }
-}
 
 /**
  * One conversation: its transcript, the live run, and the actions the chat
@@ -65,7 +38,7 @@ export function useThread(threadId: string) {
               ?.error ?? 'Conversation could not connect.',
           );
         setConnected(true);
-        await readEvents(response, (event) => {
+        await readEvents<ThreadEvent>(response, (event) => {
           if (event.type === 'messages') setMessages(event.messages);
           else if (event.type === 'live') setLive(event.live);
           else setError(event.message);

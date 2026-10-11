@@ -66,6 +66,9 @@ tar -xzf "$NODE_CACHE/$NODE_DIST.tar.gz" -C "$WORK" "$NODE_DIST/bin/node"
 step "Building the computer helper (release)"
 swift build -c release --package-path "$DESKTOP/computers"
 
+step "Building the speech helper (release)"
+swift build -c release --package-path "$DESKTOP/speech"
+
 step "Fetching the pinned Linux kernel"
 # Kata Containers 3.26.0 arm64, the kernel Apple's Containerization examples use.
 KATA_URL="https://github.com/kata-containers/kata-containers/releases/download/3.26.0/kata-static-3.26.0-arm64.tar.zst"
@@ -93,6 +96,8 @@ cp "$WORK/$NODE_DIST/bin/node" "$APP/Contents/Resources/node"
 cp -R "$WORK/app" "$APP/Contents/Resources/app"
 mkdir -p "$APP/Contents/Resources/computers"
 cp "$DESKTOP/computers/.build/release/pidots-computers" "$APP/Contents/Resources/computers/"
+mkdir -p "$APP/Contents/Resources/speech"
+cp "$DESKTOP/speech/.build/release/pidots-speech" "$APP/Contents/Resources/speech/"
 cp "$KERNEL" "$APP/Contents/Resources/computers/vmlinux"
 cp -R "$ROOT/dist/computer-agent" "$APP/Contents/Resources/computers/agent"
 sed "s/__VERSION__/$VERSION/g" "$DESKTOP/macos/Info.plist" > "$APP/Contents/Info.plist"
@@ -113,6 +118,8 @@ codesign --force --sign "$SIGN_IDENTITY" --options runtime \
   --entitlements "$DESKTOP/macos/node.entitlements" "$APP/Contents/Resources/node"
 codesign --force --sign "$SIGN_IDENTITY" --options runtime \
   --entitlements "$DESKTOP/macos/computers.entitlements" "$APP/Contents/Resources/computers/pidots-computers"
+codesign --force --sign "$SIGN_IDENTITY" --options runtime \
+  --entitlements "$DESKTOP/macos/speech.entitlements" "$APP/Contents/Resources/speech/pidots-speech"
 codesign --force --sign "$SIGN_IDENTITY" --options runtime \
   --entitlements "$DESKTOP/macos/app.entitlements" "$APP"
 codesign --verify --strict "$APP"

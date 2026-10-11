@@ -20,3 +20,4 @@ data/
 # Desktop shell build output
 desktop/target/
 desktop/computers/.build/
+desktop/speech/.build/

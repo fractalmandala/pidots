@@ -15,12 +15,28 @@ use std::fs::{self, File};
 use std::net::{Ipv4Addr, SocketAddrV4, TcpListener, TcpStream};
 use std::path::{Path, PathBuf};
 use std::process::{Child, Command, Stdio};
+use std::sync::OnceLock;
 use std::sync::atomic::{AtomicU16, Ordering};
 use std::time::Duration;
 
 use anyhow::{Context as _, Result, bail};
 
 static PORT: AtomicU16 = AtomicU16::new(0);
+static DEV_ORIGIN: OnceLock<String> = OnceLock::new();
+
+/// Development only: `PIDOTS_DEV_URL` (set by `npm run desktop:dev`) points the
+/// WebView at a running Vite dev server instead of spawning the bundled
+/// server, so UI edits hot-reload in the window. Release builds ignore it.
+pub fn dev_url() -> Option<(String, u16)> {
+    if !cfg!(debug_assertions) {
+        return None;
+    }
+    let url = std::env::var("PIDOTS_DEV_URL").ok()?;
+    let origin = url.trim_end_matches('/').to_string();
+    let port = origin.rsplit(':').next()?.parse().ok()?;
+    let _ = DEV_ORIGIN.set(origin.clone());
+    Some((format!("{origin}/"), port))
+}
 
 pub struct ServerConfig {
     node: PathBuf,
@@ -66,6 +82,19 @@ impl ServerConfig {
     }
 }
 
+/// The `pidots-speech` helper for voice calls: the bundled one, or this
+/// checkout's build. `None` leaves voice calls off.
+fn speech_helper() -> Option<PathBuf> {
+    let exe = std::env::current_exe().ok()?;
+    let bundled = exe
+        .parent()?
+        .parent()?
+        .join("Resources/speech/pidots-speech");
+    let checkout =
+        Path::new(env!("CARGO_MANIFEST_DIR")).join("speech/.build/release/pidots-speech");
+    [bundled, checkout].into_iter().find(|path| path.is_file())
+}
+
 pub struct Server {
     child: Child,
     port: u16,
@@ -82,6 +111,9 @@ impl Server {
         let mut command = Command::new(&config.node);
         if let Some(file) = computers_file {
             command.env("PIDOTS_COMPUTERS_FILE", file);
+        }
+        if let Some(helper) = speech_helper() {
+            command.env("PIDOTS_SPEECH_HELPER", helper);
         }
         let child = command
             .arg(config.entry)
@@ -137,7 +169,9 @@ impl Drop for Server {
 }
 
 pub fn data_dir() -> PathBuf {
-    let home = std::env::var_os("HOME").map(PathBuf::from).unwrap_or_default();
+    let home = std::env::var_os("HOME")
+        .map(PathBuf::from)
+        .unwrap_or_default();
     home.join("Library/Application Support/Pidots")
 }
 
@@ -157,7 +191,8 @@ fn free_port() -> Result<u16> {
 /// Keep the WebView on the local Pidots origin; send everything else to the browser.
 pub fn allow_navigation(url: String) -> bool {
     let origin = format!("http://127.0.0.1:{}", PORT.load(Ordering::SeqCst));
-    if url == origin || url.starts_with(&format!("{origin}/")) {
+    let same_origin = |origin: &str| url == origin || url.starts_with(&format!("{origin}/"));
+    if same_origin(&origin) || DEV_ORIGIN.get().is_some_and(|dev| same_origin(dev)) {
         return true;
     }
     if url.starts_with("about:") || url.starts_with("data:") {

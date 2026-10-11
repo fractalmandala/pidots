@@ -5,6 +5,7 @@ import type {
   ProviderSettingsView,
   ProviderView,
   SecretView,
+  SpeechVoice,
   WorkspaceState,
 } from '../shared/types';
 import { api } from './api';
@@ -88,30 +89,33 @@ export function ProvidersDialog({
         )}
         {!view && !loadError && <p className="muted">Loading…</p>}
         {view && (
-          <>
-            <ProviderList view={view} save={save} />
-            <ChatSection
-              key={sectionKey(
-                view.chat,
-                view.providers.map((p) => p.id),
-              )}
-              view={view}
-              save={save}
-            />
-            <VoiceSection
-              key={sectionKey(
-                view.voice,
-                view.providers.map((p) => p.id),
-              )}
-              view={view}
-              save={save}
-            />
-            <WebSection key={sectionKey(view.web)} view={view} save={save} />
-            <details className="providers-advanced">
-              <summary>Advanced: computers</summary>
-              <ComputersSection view={view} save={save} />
-            </details>
-          </>
+          <div className="providers-grid">
+            <div className="providers-column">
+              <ProviderList view={view} save={save} />
+              <ChatSection
+                key={sectionKey(
+                  view.chat,
+                  view.providers.map((p) => p.id),
+                )}
+                view={view}
+                save={save}
+              />
+            </div>
+            <div className="providers-column">
+              <VoiceSection
+                key={sectionKey(view.voice)}
+                view={view}
+                save={save}
+              />
+            </div>
+            <div className="providers-column">
+              <WebSection key={sectionKey(view.web)} view={view} save={save} />
+              <details className="providers-advanced">
+                <summary>Advanced: computers</summary>
+                <ComputersSection view={view} save={save} />
+              </details>
+            </div>
+          </div>
         )}
       </section>
     </div>
@@ -177,7 +181,6 @@ function ProviderList({
                     ? `Key saved ${provider.apiKey.hint}`
                     : 'No key'}
                   {view.chat.providerId === provider.id && ' · Chat'}
-                  {view.voice.providerId === provider.id && ' · Voice'}
                 </small>
               </span>
               {provider.keyUrl && (
@@ -417,39 +420,94 @@ function VoiceSection({
   view: ProviderSettingsView;
   save: Save;
 }) {
-  const [providerId, setProviderId] = useState(view.voice.providerId ?? '');
-  const [model, setModel] = useState(view.voice.model ?? '');
-  const [voice, setVoice] = useState(view.voice.voice ?? 'marin');
+  const [voice, setVoice] = useState(view.voice.voice ?? '');
+  const [voices, setVoices] = useState<SpeechVoice[]>([]);
+  const [loaded, setLoaded] = useState(false);
+  const [loadError, setLoadError] = useState('');
+  useEffect(() => {
+    let active = true;
+    api<{ voices: SpeechVoice[] }>('/voice/voices')
+      .then((result) => {
+        if (!active) return;
+        setVoices(result.voices);
+        setLoaded(true);
+      })
+      .catch((e: unknown) => {
+        if (!active) return;
+        setLoadError(e instanceof Error ? e.message : 'Voices could not load.');
+        setLoaded(true);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+  const [previewing, setPreviewing] = useState(false);
+  const [previewError, setPreviewError] = useState('');
+  const preview = async () => {
+    setPreviewing(true);
+    setPreviewError('');
+    try {
+      // Sends the highlighted voice, or the system default when none is picked.
+      await api('/voice/preview', 'POST', { voice: voice || undefined });
+    } catch (e) {
+      setPreviewError(
+        e instanceof Error ? e.message : 'The voice did not play.',
+      );
+    } finally {
+      setPreviewing(false);
+    }
+  };
+  const languages = [...new Set(voices.map((item) => item.language))];
   return (
     <Section
       title="Voice calls"
-      description="Optional. A realtime speech provider such as OpenAI (gpt-realtime)."
+      description="Replies are spoken with Apple's built-in voices, and you are heard with Apple's speech recognition. No key is needed."
     >
       <SectionForm
-        onSubmit={() =>
-          save('/services', 'PUT', {
-            voice: { providerId, model, voice },
-          })
-        }
+        onSubmit={() => save('/services', 'PUT', { voice: { voice } })}
       >
-        <ProviderModelFields
-          id="voice"
-          view={view}
-          providerId={providerId}
-          setProviderId={setProviderId}
-          model={model}
-          setModel={setModel}
-          allowNone
-        />
         <label className="field-label" htmlFor="voice-name">
           Voice
         </label>
-        <input
+        <select
           id="voice-name"
-          value={voice}
-          maxLength={60}
+          value={voices.some((item) => item.id === voice) ? voice : ''}
+          disabled={!voices.length}
           onChange={(e) => setVoice(e.target.value)}
-        />
+        >
+          <option value="">System default</option>
+          {languages.map((language) => (
+            <optgroup key={language} label={language}>
+              {voices
+                .filter((item) => item.language === language)
+                .map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.quality === 'default'
+                      ? item.name
+                      : `${item.name} (${item.quality})`}
+                  </option>
+                ))}
+            </optgroup>
+          ))}
+        </select>
+        {!loaded ? (
+          <small>Loading voices…</small>
+        ) : (
+          (loadError || !voices.length) && (
+            <small>
+              {loadError || 'Voice calls run in the Pidots Mac app.'}
+            </small>
+          )
+        )}
+        <button
+          type="button"
+          className="text-button"
+          disabled={!voices.length || previewing}
+          onClick={() => void preview()}
+        >
+          {previewing ? 'Playing…' : 'Preview voice'}
+        </button>
+        {previewError && <small>{previewError}</small>}
       </SectionForm>
     </Section>
   );

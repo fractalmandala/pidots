@@ -28,6 +28,8 @@
   <true/>
   <key>NSMicrophoneUsageDescription</key>
   <string>Pidots uses the microphone for voice calls with your Dots.</string>
+  <key>NSSpeechRecognitionUsageDescription</key>
+  <string>Pidots turns your speech into text during voice calls with your Dots.</string>
   <key>NSAppTransportSecurity</key>
   <dict>
     <key>NSAllowsLocalNetworking</key>

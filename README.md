@@ -1,14 +1,24 @@
 # Pidots
 
+<img style="object-fit: contain; height: 128px; width: 128px" src="./public/dots/darkgreen.png" alt="furrydot"/>
+
 Pidots is a native macOS app that gives you persistent AI agents ("Dots"). Each Dot can chat, read and edit pages, call connected services, and use its own Linux computer. This page is the map. Three subsystems have their own deep dives:
 
 - [SHELL.md](SHELL.md): the native macOS shell (GPUI Kit window, WebView, menu bar, child processes).
 - [ENGINE.md](ENGINE.md): how Pi (pi-durable and pi-ai) runs every conversation turn.
-- [COMPUTERS.md](COMPUTERS.md): how each Dot's Linux micro-VM works.
+- [COMPUTERS.md](/docs/COMPUTERS.md): how each Dot's Linux micro-VM works.
+
+## V 0.1.5
+
+1. Changed settings for the Linux VM machines to set default size at 4GB, per dot.
+- Provider.swift: the template is built at 4.gib() instead of 32.gib(), and templateVersion is now base-v2.
+- docs/COMPUTERS.md: the size and template name are updated to match.
+2. Dot avatars are now furries.
+3. Added speech-to-text integration with Apple. 
 
 ## Commands
 
-```bash
+```sh
 npm test                                   # vitest
 npx tsc --noEmit && npx eslint src tests vite.config.ts && npm run check-format
 swift test --package-path desktop/computers   # computer helper tests
@@ -17,7 +27,7 @@ npm run desktop                            # run the macOS shell from this check
 npm run desktop:dmg                        # release build -> desktop/target/dist/Pidots-<version>-arm64.dmg
 ```
 
-Pidots is built on a core of [Opendots](https://github.com/CopilotKit/OpenDots) but does not use AG-UI, Copilotkit, or their implementation of Computers. There is no Slack connectivity. 
+Pidots is built on a core of [Opendots](https://github.com/CopilotKit/OpenDots) but does not use AG-UI, Copilotkit, or their implementation of Computers. There is no Slack connectivity.
 
 ## Documentation
 

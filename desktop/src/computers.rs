@@ -43,17 +43,22 @@ impl ComputersConfig {
                 agent: bundled.join("agent"),
             },
             {
-                let repo = Path::new(env!("CARGO_MANIFEST_DIR")).parent()?.to_path_buf();
+                let repo = Path::new(env!("CARGO_MANIFEST_DIR"))
+                    .parent()?
+                    .to_path_buf();
                 Self {
                     helper: Path::new(env!("CARGO_MANIFEST_DIR"))
                         .join("computers/.build/release/pidots-computers"),
-                    kernel: Path::new(env!("CARGO_MANIFEST_DIR")).join("target/kernel-cache/vmlinux"),
+                    kernel: Path::new(env!("CARGO_MANIFEST_DIR"))
+                        .join("target/kernel-cache/vmlinux"),
                     agent: repo.join("dist/computer-agent"),
                 }
             },
         ];
         candidates.into_iter().find(|config| {
-            config.helper.is_file() && config.kernel.is_file() && config.agent.join("agent.mjs").is_file()
+            config.helper.is_file()
+                && config.kernel.is_file()
+                && config.agent.join("agent.mjs").is_file()
         })
     }
 }
@@ -67,15 +72,19 @@ pub struct Computers {
 impl Computers {
     pub fn spawn(config: &ComputersConfig) -> Result<Self> {
         let folder = data_dir().join("computers");
-        fs::create_dir_all(&folder).with_context(|| format!("Could not create {}", folder.display()))?;
+        fs::create_dir_all(&folder)
+            .with_context(|| format!("Could not create {}", folder.display()))?;
         let supervisor_token = random_hex()?;
         let computer_token = random_hex()?;
         let secrets = folder.join("secrets.json");
         write_private(
             &secrets,
-            &format!(r#"{{"supervisorToken":"{supervisor_token}","computerToken":"{computer_token}"}}"#),
+            &format!(
+                r#"{{"supervisorToken":"{supervisor_token}","computerToken":"{computer_token}"}}"#
+            ),
         )?;
-        let log = File::create(folder.join("computers.log")).context("Could not create computers.log")?;
+        let log =
+            File::create(folder.join("computers.log")).context("Could not create computers.log")?;
         let mut child = Command::new(&config.helper)
             .args(["--root".as_ref(), folder.as_os_str()])
             .args(["--kernel".as_ref(), config.kernel.as_os_str()])
@@ -100,8 +109,14 @@ impl Computers {
             let mut sink = Vec::new();
             let _ = reader.read_to_end(&mut sink);
         });
-        let line = receiver.recv_timeout(Duration::from_secs(15)).unwrap_or_default();
-        let Some(port) = line.trim().strip_prefix("PIDOTS_COMPUTERS_PORT=").and_then(|p| p.parse::<u16>().ok()) else {
+        let line = receiver
+            .recv_timeout(Duration::from_secs(15))
+            .unwrap_or_default();
+        let Some(port) = line
+            .trim()
+            .strip_prefix("PIDOTS_COMPUTERS_PORT=")
+            .and_then(|p| p.parse::<u16>().ok())
+        else {
             let _ = child.kill();
             bail!("The computer helper did not start; see computers.log.");
         };

@@ -1,0 +1,120 @@
+.task-list
+	display: flex
+	flex-direction: column
+	gap: 8px
+.task-row
+	width: 100%
+	padding: 17px
+	gap: 13px
+	background: #fff
+	text-align: left
+	border: 1px solid #e9e8e6
+	border-radius: 4px
+.task-row-icon
+	height: 37px
+	width: 37px
+	border: 1px solid #e9eaf2
+	border-radius: 4px
+	background: #f5f6fa
+	color: #8b99c5
+	display: grid
+	place-items: center
+	flex-shrink: 0
+.task-row > div
+	min-width: 0
+	flex: 1
+.task-row strong
+	display: block
+	font-size: 12px
+	white-space: nowrap
+	overflow: hidden
+	text-overflow: ellipsis
+	font-weight: 500
+.task-row > div > span
+	display: block
+	margin-top: 6px
+	color: #a4a5ae
+	font-size: 9px
+.task-row > svg
+	color: #b8bac5
+.status
+	display: inline-flex
+	align-items: center
+	gap: 5px
+	font-size: 9px
+	color: #9295a2
+	background: #f3f3f5
+	padding: 5px 7px
+	border-radius: 4px
+	white-space: nowrap
+.status > span
+	width: 4px
+	height: 4px
+	background: currentColor
+	border-radius: 50%
+.status.completed
+	color: #7a967e
+	background: #eff4ee
+.status.running
+	color: #788bc3
+	background: #edf0f9
+.status.failed,
+.status.interrupted
+	color: #b17d73
+	background: #faf0ed
+.status.paused
+	color: #aa9776
+	background: #f7f3eb
+.large-empty
+	max-width: 440px
+	text-align: center
+	margin: 60px auto
+.large-empty .mascot
+	width: 140px
+	height: 140px
+	opacity: 0.85
+.large-empty h2
+	font-size: 22px
+.large-empty p
+	font-size: 12px
+	color: #999ba5
+	line-height: 1.9
+.memory-grid
+	display: grid
+	grid-template-columns: repeat(2, 1fr)
+	gap: 16px
+.memory-card
+	background: white
+	border: 1px solid var(--line)
+	border-radius: 6px
+	padding: 22px
+.memory-card > svg
+	color: #9fa9cc
+.memory-card > p
+	font-size: 13px
+	margin: 16px 0 23px
+	white-space: pre-wrap
+.memory-card > div
+	display: flex
+	align-items: center
+	gap: 3px
+.memory-card small
+	color: #a1a2aa
+	font-size: 9px
+	margin-right: auto
+.notice
+	background: #f3eee4
+	padding: 12px 40px
+	color: #9b865e
+	font-size: 11px
+	border-bottom: 1px solid #eae1d0
+.error-banner
+	background: #fbede9
+	border-bottom: 1px solid #ebdcd5
+	color: #ac7367
+	padding: 11px 30px
+	font-size: 12px
+	display: flex
+	align-items: center
+	justify-content: space-between
+	gap: 15px

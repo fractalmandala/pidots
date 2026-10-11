@@ -15,6 +15,10 @@ const required = (name: string) => {
 const home = process.env.HOME ?? '/home/dot';
 const workspace = process.env.PIDOTS_WORKSPACE ?? join(home, 'workspace');
 const socket = process.env.PIDOTS_SOCKET ?? '/run/pidots/agent.sock';
+// Folders and files from the owner's Mac, mounted at their own paths.
+const shared = (process.env.PIDOTS_SHARED ?? '')
+  .split('\n')
+  .filter((path) => path.startsWith('/'));
 mkdirSync(workspace, { recursive: true });
 const control = new Control();
 const browser = new Browser({
@@ -26,6 +30,7 @@ const server = createAgentServer({
   dotId: required('PIDOTS_DOT_ID'),
   token: required('PIDOTS_TOKEN'),
   workspace,
+  shared,
   browser,
   control,
 });

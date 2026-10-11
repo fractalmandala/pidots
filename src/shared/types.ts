@@ -103,6 +103,21 @@ export interface CallReceipt {
   transcript: string;
   error: string | null;
 }
+/** An Apple voice installed on this Mac, for calls. */
+export interface SpeechVoice {
+  id: string;
+  name: string;
+  language: string;
+  /** "default", "enhanced" or "premium". */
+  quality: string;
+}
+/** What a voice call streams to its screen, from /voice/calls/:id/events. */
+export type VoiceEvent =
+  | { type: 'call'; call: CallReceipt }
+  | { type: 'phase'; phase: 'listening' | 'thinking' | 'speaking' }
+  | { type: 'user'; text: string; final: boolean }
+  | { type: 'dot'; text: string }
+  | { type: 'error'; message: string };
 export interface SetupStatus {
   model: boolean;
   browser: boolean;
@@ -140,7 +155,7 @@ export interface ProviderView {
 export interface ProviderSettingsView {
   providers: ProviderView[];
   chat: { providerId?: string; model?: string };
-  voice: { providerId?: string; model?: string; voice?: string };
+  voice: { voice?: string };
   web: {
     provider: 'parallel' | 'browser' | 'disabled';
     parallelApiKey: SecretView;

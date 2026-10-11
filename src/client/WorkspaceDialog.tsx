@@ -105,7 +105,13 @@ export function WorkspaceDialog({
   return (
     <div className="modal-backdrop" onClick={onClose}>
       <section
-        className="modal"
+        className={`modal ${
+          dialog.type === 'settings'
+            ? 'modal-wide settings-modal'
+            : dialog.type === 'dot'
+              ? 'modal-wide'
+              : ''
+        }`}
         role="dialog"
         aria-modal="true"
         aria-labelledby="dialog-title"

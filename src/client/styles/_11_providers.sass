@@ -1,0 +1,124 @@
+.providers-status
+	display: flex
+	align-items: center
+	gap: 8px
+	font-size: 11px
+	border-radius: 4px
+	padding: 10px 12px
+	margin: 16px 0 6px
+	background: #f5f4f8
+	color: #6c6f80
+.providers-status .status-dot
+	width: 7px
+	height: 7px
+	border-radius: 50%
+	flex-shrink: 0
+.providers-status.ready .status-dot
+	background: #3ccf9e
+.providers-status.pending .status-dot
+	background: #f0a54a
+.providers-section
+	border: 1px solid #eeecf4
+	border-radius: 4px
+	padding: 6px 18px 18px
+	margin: 18px 0 0
+.providers-section legend
+	font-size: 12px
+	font-weight: 600
+	color: #4d5162
+	padding: 0 6px
+.providers-section p.muted
+	margin: 4px 0 0
+	line-height: 1.6
+.providers-section p.muted a
+	color: #7285d5
+.providers-section input,
+.providers-section select
+	width: 100%
+.provider-list
+	list-style: none
+	padding: 0
+	margin: 12px 0
+	display: grid
+	gap: 8px
+.provider-row
+	display: flex
+	align-items: center
+	gap: 10px
+	border: 1px solid #eeecf4
+	border-radius: 4px
+	padding: 10px 12px
+	color: #8a8fa3
+.provider-meta
+	display: grid
+	gap: 2px
+	flex: 1
+	min-width: 0
+.provider-meta strong
+	font-size: 12px
+	font-weight: 500
+	color: #3c3f4c
+.provider-meta small
+	font-size: 10px
+	color: #9a9eae
+	overflow: hidden
+	text-overflow: ellipsis
+	white-space: nowrap
+.provider-row .text-button
+	display: inline-flex
+	align-items: center
+.provider-form
+	border: 1px dashed #dcdbe5
+	border-radius: 4px
+	padding: 2px 14px 14px
+	margin-top: 8px
+.key-link,
+.provider-form .text-button,
+.providers-section form > .text-button
+	display: inline-flex
+	align-items: center
+	margin-top: 8px
+	margin-right: 12px
+.input-with-button
+	display: flex
+	gap: 8px
+.input-with-button input
+	flex: 1
+	min-width: 0
+.input-with-button .secondary-button
+	flex-shrink: 0
+.section-actions
+	display: flex
+	align-items: center
+	justify-content: flex-end
+	gap: 10px
+	margin-top: 16px
+.section-actions .chat-error,
+.section-actions .muted
+	margin: 0 auto 0 0
+	font-size: 11px
+.section-actions .primary
+	padding: 7px 16px
+	border-radius: 4px
+.providers-advanced
+	margin-top: 18px
+.providers-advanced summary
+	cursor: pointer
+	font-size: 12px
+	color: #6c6f80
+.unlock
+	text-align: center
+	max-width: 380px
+	margin: 10vh auto
+	padding: 25px
+.unlock h1
+	font-size: 28px
+.unlock p
+	font-size: 12px
+	color: #999dab
+.unlock form
+	display: flex
+	flex-direction: column
+	gap: 12px
+.unlock .error
+	color: #bc8076

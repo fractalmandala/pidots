@@ -22,26 +22,63 @@ export interface ComputerControl {
   resumeSnapshotRequired: boolean;
   request?: { id: string; status: string };
 }
+/** A folder or file on the owner's Mac shared read-write into a Dot's computer. */
+export interface ComputerFolder {
+  /** Absolute host path; the computer sees it at the same path. */
+  path: string;
+  kind: 'directory' | 'file';
+  addedAt: number;
+}
 export interface ComputerStatus {
   configured: boolean;
   state: 'not_configured' | 'stopped' | 'preparing' | 'running' | 'unavailable';
   /** First-time setup progress while `preparing`. */
   progress?: string;
   permissions: ComputerPermissions;
+  folders: ComputerFolder[];
   audit: ComputerAudit[];
   control?: ComputerControl;
   error?: string;
 }
+/**
+ * Guest paths that shared folders may never cover or replace: the system,
+ * the computer service, and the Dot's own home.
+ */
+export const reservedComputerPaths = [
+  '/bin',
+  '/boot',
+  '/dev',
+  '/etc',
+  '/home',
+  '/lib',
+  '/lib64',
+  '/opt',
+  '/proc',
+  '/root',
+  '/run',
+  '/sbin',
+  '/sys',
+  '/tmp',
+  '/usr',
+  '/var',
+];
+/** True when `path` is `root` or inside it (both absolute, normalized). */
+export function insidePath(path: string, root: string) {
+  return path === root || path.startsWith(root === '/' ? '/' : `${root}/`);
+}
+/**
+ * Workspace paths are relative to /home/dot/workspace. Absolute paths are
+ * allowed only inside a folder the owner shared; the broker checks that.
+ */
 const path = z
   .string()
   .max(1024)
   .refine(
     (p) =>
-      !p.startsWith('/') &&
       !p.includes('\\') &&
       !p.includes('\0') &&
       !p.split('/').some((s) => s === '..'),
-    'Use a relative workspace path without traversal.',
+    'Use a workspace path, or a shared folder path, without traversal.',
   );
 const empty = z.object({}).strict();
 const ref = {

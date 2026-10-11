@@ -1,10 +1,16 @@
 import { createHmac } from 'node:crypto';
+import { existsSync } from 'node:fs';
+import { realpath, stat } from 'node:fs/promises';
+import { isAbsolute, normalize } from 'node:path';
 import { z } from 'zod';
 import {
   computerInputs,
   computerPermissionsSchema,
+  insidePath,
+  reservedComputerPaths,
   type ComputerAction,
   type ComputerControl,
+  type ComputerFolder,
   type ComputerStatus,
 } from '../shared/computer-types.js';
 import type { WorkspaceStore } from './workspace.js';
@@ -18,6 +24,44 @@ const stateSchema = z.object({
   /** Provisioning progress while the provider prepares the computer. */
   message: z.string().max(500).optional(),
 });
+/**
+ * Resolves a folder or file the owner wants to share to its real absolute
+ * path. The computer mounts it at that same path, so it must not cover or
+ * replace any system or service path inside the VM.
+ */
+export async function sharedPath(input: string) {
+  if (
+    !input ||
+    input.length > 1024 ||
+    !isAbsolute(input) ||
+    [...input].some((char) => char.charCodeAt(0) < 0x20)
+  )
+    throw new Error('Choose a folder or file by its full path.');
+  let path: string;
+  let info;
+  try {
+    path = await realpath(normalize(input));
+    info = await stat(path);
+  } catch {
+    throw new Error(`${input} does not exist.`);
+  }
+  if (!info.isDirectory() && !info.isFile())
+    throw new Error(`${input} is not a folder or file.`);
+  if (
+    reservedComputerPaths.some(
+      (reserved) => insidePath(path, reserved) || insidePath(reserved, path),
+    )
+  )
+    throw new Error(
+      `${path} can't be shared: it would cover system folders inside the computer.`,
+    );
+  return { path, kind: info.isDirectory() ? 'directory' : 'file' } as const;
+}
+/** True when an absolute computer path is inside one of the shared folders. */
+export function inSharedFolder(path: string, folders: ComputerFolder[]) {
+  const target = normalize(path).replace(/(.)\/$/, '$1');
+  return folders.some((folder) => insidePath(target, folder.path));
+}
 const controlSchema = z.object({
   holder: z.enum(['bot', 'human']),
   requested: z.boolean(),
@@ -193,6 +237,7 @@ export class ComputerService {
     const base = {
       configured: this.configured,
       permissions: this.workspace.computers.permissions(id),
+      folders: this.workspace.computers.folders(id),
       audit: this.workspace.computers.audit(id),
     };
     if (!this.configured) return { ...base, state: 'not_configured' };
@@ -257,12 +302,51 @@ export class ComputerService {
       this.allowed(id, undefined, 'owner');
       // First-time setup can take minutes; the provider answers at once with
       // `preparing` and the panel polls status until it is running.
-      const state = stateSchema.parse(
-        await this.supervisor(`/computers/${id}/ensure`, {}),
-      );
-      if (state.status === 'running') this.endpoint(id, state);
+      await this.ensure(id);
     });
     return this.status(id);
+  }
+  /** Boots the computer with the Dot's shared folders mounted at their own paths. */
+  private async ensure(id: string) {
+    // A folder deleted since it was shared would stop the computer booting.
+    const mounts = this.workspace.computers
+      .folders(id)
+      .filter(({ path }) => existsSync(path))
+      .map(({ path }) => ({ source: path, destination: path }));
+    const state = stateSchema.parse(
+      await this.supervisor(`/computers/${id}/ensure`, { mounts }),
+    );
+    if (state.status === 'running') this.endpoint(id, state);
+  }
+  /**
+   * Shares folders or files from the owner's Mac with this Dot. Mounts are
+   * fixed when a computer boots, so a running computer restarts to apply them.
+   */
+  async addFolders(id: string, paths: string[]) {
+    this.requireDot(id);
+    const resolved = await Promise.all(paths.map(sharedPath));
+    await this.audited(id, 'share_folder', 'owner', async () => {
+      for (const { path, kind } of resolved)
+        this.workspace.computers.addFolder(id, path, kind);
+      await this.applyFolders(id);
+    });
+    return this.status(id);
+  }
+  async removeFolder(id: string, path: string) {
+    this.requireDot(id);
+    await this.audited(id, 'unshare_folder', 'owner', async () => {
+      if (!this.workspace.computers.removeFolder(id, path))
+        throw new Error('That folder is not shared with this Dot.');
+      await this.applyFolders(id);
+    });
+    return this.status(id);
+  }
+  private async applyFolders(id: string) {
+    if (!this.configured) return;
+    const state = await this.existing(id);
+    if (state?.status !== 'running' && state?.status !== 'preparing') return;
+    await this.supervisor(`/computers/${id}/stop`, {});
+    await this.ensure(id);
   }
   async stop(id: string) {
     await this.audited(id, 'stop', 'owner', async () => {
@@ -353,6 +437,15 @@ export class ComputerService {
             ? 'files'
             : 'browser';
       this.allowed(id, kind, actor);
+      const target =
+        kind === 'files' ? (parsed as { path?: string }).path : undefined;
+      if (
+        target?.startsWith('/') &&
+        !inSharedFolder(target, this.workspace.computers.folders(id))
+      )
+        throw new Error(
+          'That path is not in a folder shared with this Dot. Use a path relative to the workspace, or ask the owner to share the folder.',
+        );
       const cancellation = new AbortController();
       const activeSignal = signal
         ? AbortSignal.any([signal, cancellation.signal])

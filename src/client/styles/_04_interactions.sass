@@ -1,0 +1,59 @@
+button,
+input,
+textarea,
+select
+	font: inherit
+
+button,
+a,
+input,
+textarea,
+select
+	-webkit-tap-highlight-color: transparent
+
+button
+	cursor: pointer
+	color: inherit
+
+button:disabled
+	cursor: not-allowed
+	opacity: 0.5
+
+a
+	color: inherit
+	text-decoration: none
+
+button
+	border: 1px solid var(--line)
+	border-radius: 4px
+	background: white
+	display: inline-flex
+	align-items: center
+	justify-content: center
+	gap: 8px
+	padding: 9px 13px
+	transition: background 0.15s, transform 0.15s
+button:hover:not(:disabled)
+	background: #f4f4f9
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible
+	outline: 3px solid #b8c4fa
+	outline-offset: 3px
+button:active:not(:disabled)
+	transform: translateY(1px)
+input,
+textarea,
+select
+	width: 100%
+	border: 1px solid #dedee6
+	border-radius: 4px
+	padding: 12px
+	background: #fff
+	color: var(--ink)
+	outline: none
+textarea
+	resize: vertical
+	line-height: 1.65

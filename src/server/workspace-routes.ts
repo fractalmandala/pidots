@@ -1,5 +1,6 @@
 import { pageRoutes } from './page-routes.js';
 import { Hono } from 'hono';
+import { streamSSE } from 'hono/streaming';
 import { z } from 'zod';
 import { Platform } from './platform.js';
 import { VoiceService } from './voice.js';
@@ -98,71 +99,75 @@ export function workspaceRoutes(platform: Platform, voice: VoiceService) {
   app.get('/conversations/:id/capture', (c) =>
     c.json(platform.workspace.capture(c.req.param('id'))),
   );
+  app.get('/voice/voices', async (c) =>
+    c.json({ voices: await voice.voices() }),
+  );
+  app.post('/voice/preview', async (c) => {
+    const data = z
+      .object({ voice: z.string().max(200).optional() })
+      .strict()
+      .safeParse(await c.req.json().catch(() => null));
+    if (!data.success) return c.json({ error: 'Invalid voice.' }, 400);
+    await voice.preview(data.data.voice);
+    return c.json({ ok: true });
+  });
   app.post('/voice/calls', async (c) => {
     const data = z
-      .object({ threadId: z.string(), sdp: z.string().max(100000) })
+      .object({ threadId: z.string() })
       .strict()
       .safeParse(await c.req.json().catch(() => null));
     if (!data.success)
-      return c.json(
-        { error: 'A conversation and audio SDP offer are required.' },
-        400,
-      );
-    return c.json(
-      await voice.begin(data.data.threadId, data.data.sdp, c.req.raw.signal),
-      201,
-    );
+      return c.json({ error: 'A conversation is required.' }, 400);
+    return c.json(voice.begin(data.data.threadId), 201);
   });
   app.get('/voice/calls/:id', (c) =>
     c.json(platform.workspace.call(c.req.param('id'))),
   );
-  app.post('/voice/calls/:id/active', (c) =>
-    c.json(voice.activate(c.req.param('id'))),
+  app.get('/voice/calls/:id/events', (c) =>
+    streamSSE(c, async (stream) => {
+      const id = c.req.param('id');
+      const closed = new Promise<void>((resolve) => stream.onAbort(resolve));
+      const send = (data: unknown) =>
+        void stream.writeSSE({ data: JSON.stringify(data) });
+      // Subscribe first, then send the current state, so no change is missed.
+      const stop = voice.subscribe(id, send);
+      send({ type: 'call', call: platform.workspace.call(id) });
+      const ping = setInterval(
+        () => void stream.writeSSE({ event: 'ping', data: '' }),
+        15_000,
+      );
+      await closed;
+      clearInterval(ping);
+      stop();
+    }),
   );
-  app.post('/voice/calls/:id/compute', async (c) => {
+  app.post('/voice/calls/:id/controls', async (c) => {
     const data = z
       .object({
-        toolCallId: z.string().min(1).max(200),
-        request: z.string().trim().min(1).max(4000),
-        transcript: z.string().max(12000).default(''),
+        muted: z.boolean().optional(),
+        speakerMuted: z.boolean().optional(),
       })
       .strict()
       .safeParse(await c.req.json().catch(() => null));
     if (!data.success)
-      return c.json(
-        { error: 'A bounded compute request and tool call ID are required.' },
-        400,
-      );
-    return c.json({
-      text: await voice.compute(
-        c.req.param('id'),
-        data.data.toolCallId,
-        `${data.data.request}\n\nUntrusted current-call transcript for context:\n${data.data.transcript}`,
-      ),
-    });
+      return c.json({ error: 'Mute settings must be true or false.' }, 400);
+    return c.json(voice.controls(c.req.param('id'), data.data));
   });
   app.post('/voice/calls/:id/end', async (c) => {
     const data = z
-      .object({
-        transcript: z.string().max(20000),
-        anchorMessageId: z.string().max(200).optional(),
-      })
+      .object({ anchorMessageId: z.string().max(200).optional() })
       .strict()
       .safeParse(await c.req.json().catch(() => null));
-    if (!data.success)
-      return c.json(
-        { error: 'Transcript exceeds the 20,000 character limit.' },
-        400,
-      );
+    if (!data.success) return c.json({ error: 'Invalid call request.' }, 400);
     platform.workspace.anchorCall(c.req.param('id'), data.data.anchorMessageId);
-    return c.json(await voice.end(c.req.param('id'), data.data.transcript));
+    return c.json(await voice.end(c.req.param('id')));
   });
   app.onError((error, c) => {
     const text = error.message;
     if (text.startsWith('Space access must include'))
       return c.json({ error: text }, 400);
     const known =
-      /^(Setup|Voice setup|Dot |Space |Specialist |Conversation |Call |This call|End the current|Voice provider|An audio|Agents are paused)/.test(
+      /^(Setup|Voice setup|Voice calls|Dot |Space |Specialist |Conversation |Call |This call|End the current|Voice provider|Agents are paused)/.test(
         text,
       );
     // A conversation, call or Dot the caller named that does not exist is a missing resource, not a

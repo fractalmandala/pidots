@@ -348,16 +348,6 @@ export class WorkspaceStore {
       );
     return this.call(id);
   }
-  saveLateTranscript(id: string, transcript: string) {
-    this.call(id);
-    return (
-      this.db
-        .prepare(
-          "UPDATE calls SET transcript=? WHERE id=? AND transcript='' AND endedAt IS NOT NULL",
-        )
-        .run(transcript, id).changes > 0
-    );
-  }
   anchorCall(id: string, anchor: string | undefined) {
     this.call(id);
     this.db

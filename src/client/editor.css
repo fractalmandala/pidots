@@ -25,17 +25,17 @@
   flex-shrink: 0;
 }
 .document-icon {
-  width: 40px;
-  height: 40px;
+  width: 24px;
+  height: 24px;
   padding: 0;
   border: 0;
   background: transparent;
-  border-radius: 8px;
-  color: #575e59;
+  border-radius: 4px;
+  color: #585858;
   flex-shrink: 0;
 }
 .document-icon:hover:not(:disabled) {
-  background: #f0f2ef;
+  background: #e1e1e1;
 }
 .document-icon:focus-visible,
 .format-toolbar button:focus-visible {
@@ -91,7 +91,7 @@
   border: 1px solid #2f3c34;
   min-height: 42px;
   padding: 10px 16px;
-  border-radius: 9px;
+  border-radius: 4px;
   font-size: 13px;
   font-weight: 500;
   white-space: nowrap;
@@ -112,7 +112,7 @@
   gap: 10px;
   background: #f6f7f5;
   border: 1px solid #e7e9e4;
-  border-radius: 9px;
+  border-radius: 4px;
   min-height: 43px;
   padding: 0 13px;
   flex: 1;
@@ -146,7 +146,7 @@
   display: flex;
   padding: 3px;
   border: 1px solid #e5e8e3;
-  border-radius: 9px;
+  border-radius: 4px;
 }
 .library-view-toggle button {
   border: 0;
@@ -155,7 +155,7 @@
   padding: 0;
   background: none;
   color: #737a71;
-  border-radius: 6px;
+  border-radius: 4px;
 }
 .library-view-toggle button[aria-pressed='true'] {
   background: #eef0ec;
@@ -192,7 +192,7 @@
   text-align: left;
   padding: 22px;
   border: 1px solid #e4e8e1;
-  border-radius: 12px;
+  border-radius: 4px;
   background: #fff;
   min-width: 0;
   min-height: 226px;
@@ -211,7 +211,7 @@
   color: #6f786a;
   background: #f5f6f2;
   border: 1px solid #eaede6;
-  border-radius: 9px;
+  border-radius: 4px;
   width: 38px;
   height: 42px;
   display: flex;
@@ -420,7 +420,7 @@
   padding: 0;
   min-width: 0;
   border: 0;
-  border-radius: 6px;
+  border-radius: 4px;
   background: none;
   color: #646c60;
 }
@@ -586,7 +586,7 @@
 .editor-hint kbd {
   font: inherit;
   border: 1px solid #dce2d5;
-  border-radius: 3px;
+  border-radius: 4px;
   padding: 0 4px;
   background: #fafbf7;
 }
@@ -634,7 +634,7 @@
   background: white;
   border: 1px solid #e1e5dc;
   box-shadow: 0 8px 25px #2b382318;
-  border-radius: 10px;
+  border-radius: 8px;
   padding: 6px;
 }
 .document-dropdown button {
@@ -645,7 +645,7 @@
   background: none;
   padding: 11px 12px;
   font-size: 12px;
-  border-radius: 6px;
+  border-radius: 4px;
 }
 .document-dropdown button:hover {
   background: #f2f5ec;
@@ -654,7 +654,7 @@
 .document-notice {
   border: 1px solid #e2d9c8;
   background: #fffaf0;
-  border-radius: 9px;
+  border-radius: 4px;
   padding: 14px 16px;
   margin-bottom: 25px;
   font-size: 13px;
@@ -720,7 +720,7 @@
   background: #fff;
   border: 1px solid #dbe1d5;
   box-shadow: 0 5px 25px #26331d0c;
-  border-radius: 17px;
+  border-radius: 12px;
   padding: 14px 15px 10px;
 }
 .document-chat-dock > p {
@@ -759,7 +759,7 @@
   border: 0;
   background: #f4f7ef;
   color: #526247;
-  border-radius: 7px;
+  border-radius: 4px;
   padding: 7px 27px 7px 9px;
   font-size: 11px;
   max-width: 160px;
@@ -793,7 +793,7 @@
   gap: 16px;
   background: #fff;
   border: 1px solid #e2e7dc;
-  border-radius: 12px;
+  border-radius: 4px;
   padding: 16px 18px;
   box-shadow: 0 4px 20px #27351f05;
 }
@@ -888,7 +888,7 @@
   width: 100%;
   border: 0;
   background: none;
-  border-radius: 7px;
+  border-radius: 4px;
   justify-content: flex-start;
   gap: 8px;
   text-align: left;
@@ -920,7 +920,7 @@
   z-index: 100;
   background: #fff;
   border: 1px solid #e1e5db;
-  border-radius: 12px;
+  border-radius: 8px;
   box-shadow: 0 10px 35px #24311c21;
   padding: 7px;
 }
@@ -939,7 +939,7 @@
   gap: 2px;
   width: 100%;
   border: 0;
-  border-radius: 7px;
+  border-radius: 4px;
   padding: 9px 12px;
   min-height: 51px;
   background: none;

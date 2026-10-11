@@ -1,4 +1,17 @@
-const characters = ['blue', 'mint', 'orange', 'purple'] as const;
+/** One per image in `public/dots/` (tests/mascot.test.ts checks they exist). */
+export const characters = [
+  'blue',
+  'green',
+  'orange',
+  'purple',
+  'pink',
+  'red',
+  'yellow',
+  'lightblue',
+  'green-1',
+  'black',
+  'white',
+] as const;
 
 /** Stable identity keeps each specialist recognizable across views and reloads. */
 function characterFor(identity?: string) {

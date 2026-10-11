@@ -12,6 +12,8 @@ export interface AgentOptions {
   dotId: string;
   token: string;
   workspace: string;
+  /** Shared folders from the owner's Mac; absolute file paths must be inside one. */
+  shared?: string[];
   browser: Browser;
   control: Control;
 }
@@ -63,7 +65,7 @@ function authorized(request: IncomingMessage, options: AgentOptions) {
 
 /** The computer service each Dot's VM runs; the broker is its only caller. */
 export function createAgentServer(options: AgentOptions): Server {
-  const files = new Workspace(options.workspace);
+  const files = new Workspace(options.workspace, options.shared);
   const { browser, control } = options;
   const parse = <K extends keyof typeof computerInputs>(
     action: K,

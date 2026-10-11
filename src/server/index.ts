@@ -14,6 +14,7 @@ import {
   type BuiltinComputers,
 } from './provider-settings.js';
 import { Engine } from './engine/engine.js';
+import { speechHelperPath } from './speech.js';
 import type { Hono } from 'hono';
 
 // No `.env` is needed: model providers, API keys and service secrets are added
@@ -79,6 +80,7 @@ function buildRuntime(): Runtime {
   const config = platformConfigFrom(store.providerSettings(), {
     ownerToken,
     builtinComputers: computers,
+    speechHelper: speechHelperPath(),
   });
   const platform = new Platform(store, workspace, config, engine);
   const researchConfig = {

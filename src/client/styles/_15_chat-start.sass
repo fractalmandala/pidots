@@ -1,0 +1,110 @@
+.chat-workspace
+	height: calc(100dvh - 83px)
+	display: flex
+	min-height: 600px
+.chat-column
+	flex: 1
+	min-width: 0
+.chat-workspace.split .chat-column
+	flex: 1
+.chat-workspace > .result-pane
+	width: 400px
+	overflow: auto
+	flex-shrink: 0
+.new-conversation
+	max-width: 780px
+	margin: 0 auto
+	padding: 35px 46px
+.empty-chat-persona
+	text-align: center
+	margin-bottom: 24px
+	position: relative
+.empty-chat-persona .mascot
+	width: 105px
+	height: 105px
+.empty-chat-persona h2
+	font-size: 15px
+	letter-spacing: -0.2px
+	margin: 0 0 5px
+.empty-chat-persona p
+	font-size: 10px
+	max-width: 370px
+	margin: 0 auto 8px
+	color: #a0a3ae
+	line-height: 1.7
+.empty-chat-persona .text-button
+	font-size: 9px
+.starter-copy h1
+	font-size: 37px
+	font-weight: 500
+	line-height: 1.17
+	letter-spacing: -1.4px
+	margin: 12px 0
+.starter-copy > p
+	font-size: 11px
+	color: #a0a1aa
+.setup-card
+	display: flex
+	align-items: flex-start
+	gap: 13px
+	padding: 18px
+	background: #f0f2f8
+	border: 1px solid #e5e8f1
+	border-radius: 4px
+	margin-top: 25px
+.setup-icon
+	background: #e5e9f6
+	color: #99a7ce
+	border-radius: 4px
+	padding: 8px
+	display: flex
+.setup-card strong
+	font-size: 11px
+	font-weight: 550
+	color: #818ba5
+.setup-card p
+	font-size: 10px
+	color: #979fb0
+	line-height: 1.9
+	margin: 7px 0
+.setup-card code
+	font-size: 9px
+	color: #8190b2
+.setup-card a
+	font-size: 10px
+	color: #7d8fc2
+	display: flex
+	align-items: center
+	gap: 5px
+.new-conversation .composer
+	margin-top: 24px
+	min-height: 130px
+.new-conversation .composer textarea
+	min-height: 47px
+.starter-suggestions
+	display: flex
+	gap: 8px
+	justify-content: center
+	margin-top: 15px
+.starter-suggestions button
+	border: 1px solid #e7e7ed
+	background: transparent
+	font-size: 9px
+	color: #8d95a9
+	padding: 9px 10px
+.connection-note
+	display: flex
+	align-items: center
+	justify-content: center
+	gap: 7px
+	font-size: 9px
+	color: #a5a8b4
+	margin-top: 24px
+.connection-note .online-dot
+	position: static
+	width: 5px
+	height: 5px
+	border: 0
+.connection-note .text-button
+	font-size: 9px
+	margin-left: 7px

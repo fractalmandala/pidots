@@ -1,6 +1,6 @@
 {
   "name": "pidots",
-  "version": "0.1.3",
+  "version": "0.1.5",
   "description": "An implementation of pi as agents in a GPUI-kit shell, native macOS app with WebView.",
   "main": "index.js",
   "directories": {
@@ -11,7 +11,8 @@
     "dev": "concurrently -k \"cross-env NODE_ENV=development node --import tsx --watch src/server/index.ts\" \"vite\"",
     "build": "vite build && tsc -p tsconfig.server.json && node desktop/scripts/bundle-agent.mjs dist/computer-agent",
     "start": "node dist/server/server/index.js",
-    "desktop": "npm run build && swift build -c release --package-path desktop/computers && codesign --force --sign - --entitlements desktop/macos/computers.entitlements desktop/computers/.build/release/pidots-computers && cargo run --manifest-path desktop/Cargo.toml",
+    "desktop": "npm run build && swift build -c release --package-path desktop/computers && codesign --force --sign - --entitlements desktop/macos/computers.entitlements desktop/computers/.build/release/pidots-computers && swift build -c release --package-path desktop/speech && codesign --force --sign - --entitlements desktop/macos/speech.entitlements desktop/speech/.build/release/pidots-speech && cargo run --manifest-path desktop/Cargo.toml",
+    "desktop:dev": "concurrently -k -n web,shell \"npm run dev\" \"cross-env PIDOTS_DEV_URL=http://127.0.0.1:5173 cargo run --manifest-path desktop/Cargo.toml\"",
     "desktop:dmg": "bash desktop/scripts/bundle-macos.sh",
     "test": "cross-env DO_NOT_TRACK=1 vitest run",
     "typecheck": "tsc --noEmit",
@@ -64,6 +65,7 @@
     "postcss": "^8.5.28",
     "prettier": "^3.9.9",
     "react-test-renderer": "^19.3.0",
+    "sass": "^1.105.1",
     "tsx": "^4.23.15",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.71.0",
