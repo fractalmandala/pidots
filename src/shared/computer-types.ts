@@ -67,7 +67,7 @@ export function insidePath(path: string, root: string) {
   return path === root || path.startsWith(root === '/' ? '/' : `${root}/`);
 }
 /**
- * Workspace paths are relative to /home/dot/workspace. Absolute paths are
+ * Workspace paths are relative to the Dot's ~/workspace (/home/dot-<id>/workspace). Absolute paths are
  * allowed only inside a folder the owner shared; the broker checks that.
  */
 const path = z

@@ -1,7 +1,7 @@
-import { createHmac } from 'node:crypto';
+import { createHmac, randomUUID } from 'node:crypto';
 import { existsSync } from 'node:fs';
-import { realpath, stat } from 'node:fs/promises';
-import { isAbsolute, normalize } from 'node:path';
+import { mkdir, realpath, stat, writeFile } from 'node:fs/promises';
+import { isAbsolute, join, normalize } from 'node:path';
 import { z } from 'zod';
 import {
   computerInputs,
@@ -62,6 +62,27 @@ export function inSharedFolder(path: string, folders: ComputerFolder[]) {
   const target = normalize(path).replace(/(.)\/$/, '$1');
   return folders.some((folder) => insidePath(target, folder.path));
 }
+/**
+ * Saves an agent screenshot as a PNG on the host and returns the result with
+ * only a path reference, so no base64 image is ever stored in a transcript.
+ */
+export async function storeScreenshot(
+  dir: string | undefined,
+  dotId: string,
+  result: unknown,
+): Promise<unknown> {
+  if (!result || typeof result !== 'object' || Array.isArray(result))
+    return result;
+  const { base64, ...rest } = result as Record<string, unknown>;
+  if (typeof base64 !== 'string') return result;
+  if (!dir || !/^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$/.test(dotId))
+    return { ...rest, note: 'Screenshot taken but not stored.' };
+  const folder = join(dir, dotId);
+  await mkdir(folder, { recursive: true, mode: 0o700 });
+  const path = join(folder, `${Date.now()}-${randomUUID().slice(0, 8)}.png`);
+  await writeFile(path, Buffer.from(base64, 'base64'), { mode: 0o600 });
+  return { ...rest, path };
+}
 const controlSchema = z.object({
   holder: z.enum(['bot', 'human']),
   requested: z.boolean(),
@@ -76,6 +97,8 @@ export class ComputerService {
     private paused: () => boolean,
     private transport: typeof fetch = fetch,
     private deadlineMs = 70000,
+    private startWaitMs = 60000,
+    private pollMs = 500,
   ) {}
   get configured() {
     return !!(
@@ -226,11 +249,27 @@ export class ComputerService {
       .parse(await this.supervisor('/computers', undefined, signal));
     return listing.computers.find((c) => c.botId === id);
   }
+  /**
+   * The Dot's endpoint, starting it on first use: the shared computer boots
+   * lazily and stops itself when idle, so a tool call simply waits for it.
+   */
   private async running(id: string, signal?: AbortSignal) {
-    const state = await this.existing(id, signal);
-    if (!state || state.status !== 'running')
-      throw new Error('Start this Dot’s computer first.');
-    return this.endpoint(id, state);
+    let state = await this.existing(id, signal);
+    if (state?.status === 'running') return this.endpoint(id, state);
+    await this.ensure(id);
+    const until = Date.now() + this.startWaitMs;
+    for (;;) {
+      state = await this.existing(id, signal);
+      if (state?.status === 'running') return this.endpoint(id, state);
+      if (state?.status === 'failed')
+        throw new Error(state.message ?? 'The computer could not start.');
+      if (Date.now() >= until)
+        throw new Error(
+          `The computer is still starting${state?.message ? ` (${state.message})` : ''}. Try again in a minute.`,
+        );
+      signal?.throwIfAborted();
+      await new Promise((resolve) => setTimeout(resolve, this.pollMs));
+    }
   }
   async status(id: string): Promise<ComputerStatus> {
     this.requireDot(id);
@@ -319,8 +358,10 @@ export class ComputerService {
     if (state.status === 'running') this.endpoint(id, state);
   }
   /**
-   * Shares folders or files from the owner's Mac with this Dot. Mounts are
-   * fixed when a computer boots, so a running computer restarts to apply them.
+   * Shares folders or files from the owner's Mac with this Dot. The shared
+   * computer mounts every Dot's folders at boot, so the Dot's service restarts
+   * and the provider reboots the VM if no other Dot is using it (otherwise
+   * the new folders apply at the next restart; status says so).
    */
   async addFolders(id: string, paths: string[]) {
     this.requireDot(id);
@@ -356,7 +397,7 @@ export class ComputerService {
     });
     return this.status(id);
   }
-  /** Removes the computer and its disk; its workspace files are lost. */
+  /** Removes the Dot's user from the shared computer; its workspace files are lost. */
   async delete(id: string) {
     await this.audited(id, 'delete', 'owner', async () => {
       if (!this.configured)
@@ -477,6 +518,8 @@ export class ComputerService {
           delete copy.command;
           return copy;
         }
+        if (action === 'screenshot' && actor === 'agent')
+          return storeScreenshot(this.config.computerScreenshotDir, id, result);
         return result;
       } finally {
         clearInterval(watcher);

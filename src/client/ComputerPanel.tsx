@@ -810,9 +810,10 @@ export function ComputerPanel({ dot }: { dot: Dot }) {
             </div>
             <p className="computer-hint">
               Stopping keeps this Dot’s files, software and browser sign-ins.
-              Each computer is a private Linux virtual machine; the Dot works as
-              the user <code>dot</code> in <code>/home/dot/workspace</code>,
-              plus any folders you share from your Mac.
+              All Dots share one Linux virtual machine that starts when needed
+              and stops when idle; each Dot works as its own private user in{' '}
+              <code>~/workspace</code>, plus any folders you share from your
+              Mac.
             </p>
           </details>
         </>

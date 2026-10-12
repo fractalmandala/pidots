@@ -82,6 +82,8 @@ function buildRuntime(): Runtime {
     builtinComputers: computers,
     speechHelper: speechHelperPath(),
   });
+  if (database !== ':memory:')
+    config.computerScreenshotDir = join(dirname(database), 'screenshots');
   const platform = new Platform(store, workspace, config, engine);
   const researchConfig = {
     mode: 'live' as const,

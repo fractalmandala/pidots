@@ -13,6 +13,8 @@ export interface PlatformConfig extends WebConfig {
   computerSupervisorToken?: string;
   computerToken?: string;
   computerNamespace?: string;
+  /** Where agent screenshots are saved as PNGs; transcripts keep only the path. */
+  computerScreenshotDir?: string;
   browserUrl?: string;
   browserSecret?: string;
   /** The bundled `pidots-speech` helper. Voice calls are off without it. */
