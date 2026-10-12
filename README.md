@@ -6,7 +6,14 @@ Pidots is a native macOS app that gives you persistent AI agents ("Dots"). Each 
 
 - [SHELL.md](SHELL.md): the native macOS shell (GPUI Kit window, WebView, menu bar, child processes).
 - [ENGINE.md](ENGINE.md): how Pi (pi-durable and pi-ai) runs every conversation turn.
-- [COMPUTERS.md](/docs/COMPUTERS.md): how each Dot's Linux micro-VM works.
+- [COMPUTERS.md](/docs/COMPUTERS.md): how the shared Linux micro-VM works.
+
+## V 0.1.6
+
+1. One shared Linux VM (`pidots-computer`) for every Dot instead of one VM per Dot: 2 vCPUs and 2 GiB by default, started on the first computer tool call and stopped after 15 idle minutes. Set `cpus`, `memoryMiB` and `idleMinutes` in `~/Library/Application Support/Pidots/computers/settings.json`.
+- Each Dot is its own Linux user with a private home (`/home/dot-<id>`, 0700), workspace, browser profile, service and token.
+- Agent screenshots are saved as PNGs next to the database (`screenshots/<dot>/`) and only the path is kept in the transcript.
+- The VM size is now actually applied (before, every VM ran at the framework default of 4 vCPUs and 1 GiB).
 
 ## V 0.1.5
 
@@ -45,7 +52,7 @@ The app is three processes, started and stopped together by the shell:
 Pidots.app/Contents/MacOS/pidots                    GPUI Kit shell (Rust)
 ├── Resources/node server.mjs                       Node server: API, engine, broker
 │      └── WebView loads http://127.0.0.1:<port>/   React UI (served by the same server)
-└── Resources/computers/pidots-computers            Swift helper: one Linux micro-VM per Dot
+└── Resources/computers/pidots-computers            Swift helper: one Linux micro-VM shared by all Dots
          └── VM: node /opt/pidots/agent.mjs         computer service inside each VM
 ```
 

@@ -4,7 +4,7 @@ Pidots is a native macOS app that gives you persistent AI agents ("Dots"). Each 
 
 - [SHELL.md](SHELL.md): the native macOS shell (GPUI Kit window, WebView, menu bar, child processes).
 - [ENGINE.md](ENGINE.md): how Pi (pi-durable and pi-ai) runs every conversation turn.
-- [COMPUTERS.md](COMPUTERS.md): how each Dot's Linux micro-VM works.
+- [COMPUTERS.md](COMPUTERS.md): how the shared Linux micro-VM works.
 
 ## Commands
 
@@ -33,7 +33,7 @@ The app is three processes, started and stopped together by the shell:
 Pidots.app/Contents/MacOS/pidots                    GPUI Kit shell (Rust)
 ├── Resources/node server.mjs                       Node server: API, engine, broker
 │      └── WebView loads http://127.0.0.1:<port>/   React UI (served by the same server)
-└── Resources/computers/pidots-computers            Swift helper: one Linux micro-VM per Dot
+└── Resources/computers/pidots-computers            Swift helper: one Linux micro-VM shared by all Dots
          └── VM: node /opt/pidots/agent.mjs         computer service inside each VM
 ```
 

@@ -1,6 +1,6 @@
 # Personal computers
 
-Every Dot can have its own computer: a private **Linux micro-VM** on the user's Mac, with a terminal, files and a Chromium browser. The Dot drives it through `computer_*` tools; the owner watches it, takes control of the browser, and starts, stops or deletes it in the **Computer panel**.
+Every Dot can have its own computer: a private **Linux user inside one shared Linux micro-VM** (`pidots-computer`) on the user's Mac, with a terminal, files and a Chromium browser. The Dot drives it through `computer_*` tools; the owner watches it, takes control of the browser, and starts, stops or deletes it in the **Computer panel**.
 
 This page explains the design, every component, the protocols between them, and how to build, test and extend it.
 
@@ -28,12 +28,14 @@ Inside the VM, the computer service (`src/computer-agent/`) also checks a per-Do
 
 ## Isolation and guarantees
 
-- **Strong isolation:** each computer is its own lightweight VM with its own kernel. Nothing on the Mac is shared except a **read-only** folder with the computer service code (`/opt/pidots`) and any **shared folders** the owner chose for that Dot (below).
-- **Shared folders:** the owner can share any number of folders or files from their Mac with a Dot (Computer panel → **Folders**). Each is mounted **read-write** into that Dot's VM only, at the **same absolute path** (so `/Users/me/project` is `/Users/me/project` inside), and changes are the owner's real files. Paths that would cover system folders in the VM (`/`, `/usr`, `/opt`, `/home`, `/etc`, …; see `reservedComputerPaths`) are refused. Mounts are fixed at boot, so adding or removing one restarts a running computer.
-- **Unprivileged:** the Dot's commands and browser run as user `dot` (uid 1001, no sudo, `/etc/shadow` unreadable). Its workspace is `/home/dot/workspace`.
-- **Private per Dot:** each Dot has its own disk, VM, relay port and token. Files are not shared between Dots.
+- **One VM for all Dots:** a single sparse disk (`computers/computer/rootfs.ext4`, a copy-on-write clone of the template), 2 vCPUs and 2 GiB by default. It boots on the first computer request, and stops after 15 idle minutes. `computers/settings.json` (`{"cpus": 2, "memoryMiB": 2048, "idleMinutes": 15}`) changes these; the desktop shell passes them to the helper at launch.
+- **Isolation between Dots is Unix users, not kernels:** each Dot is user `dot-<16 hex>` with home `/home/dot-<id>` (0700), its own workspace, Chromium profile, service process, socket and token. A root router in the VM (`router.mjs`) forwards each request to the Dot named in `x-pidots-dot-id`; that Dot's service still checks its own token. Nothing on the Mac is shared except a **read-only** folder with the service code (`/opt/pidots`) and the **shared folders** (below).
+- **Shared folders:** the owner can share any number of folders or files from their Mac with a Dot (Computer panel → **Folders**). Each is mounted **read-write** into that Dot's VM only, at the **same absolute path** (so `/Users/me/project` is `/Users/me/project` inside), and changes are the owner's real files. Paths that would cover system folders in the VM (`/`, `/usr`, `/opt`, `/home`, `/etc`, …; see `reservedComputerPaths`) are refused. The VM mounts the union of every Dot's shared folders at boot; each Dot's service only allows its own (`files.ts`). Adding a folder restarts the VM if no other Dot is using it, otherwise it applies at the next restart and the status says so. **Limit:** shell commands of other Dots can technically read a mounted folder (virtiofs keeps the Mac's ownership), so the per-Dot folder rule is enforced for the file tools, not for `exec`.
+- **Unprivileged:** the Dot's commands and browser run as its own user (no sudo, `/etc/shadow` unreadable). Its workspace is `/home/dot-<id>/workspace`.
+- **Private per Dot:** each Dot has its own home, relay port and token. Other Dots get "Permission denied" on its home.
 - **Network:** the VM has full internet access (vmnet shared NAT) so Dots can browse. **There is no allow-list yet** (see Future work).
-- **Persistence:** stopping keeps the disk (files, installed software, browser profile and sign-ins). Delete removes it.
+- **Persistence:** stopping keeps the Dot's home (files, browser profile and sign-ins). Delete removes the Dot's user and home. Software installed system-wide is shared by all Dots.
+- **Screenshots:** a Dot's screenshots are written to `screenshots/<dot>/` beside the database; the transcript keeps only the path. The owner's live view still gets the image inline and never stores it.
 
 ## Components
 
