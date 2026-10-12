@@ -151,7 +151,7 @@ main()
 **Shutting down:** every child process is started with **stdin piped and held by the shell**.
 
 - The server (with `PIDOTS_DESKTOP=1`) and the helper both exit when their stdin closes. So they stop even if the shell crashes or is killed, because the OS closes the pipe.
-- **Normal quit** (⌘Q, menu, or closing the last window): `cx.on_app_quit` calls `Shell::stop_server()`. It closes the server's stdin and waits up to 3 s, then kills it; then it closes the helper's stdin and waits up to 15 s for its VMs to stop, then kills it.
+- **Normal quit** (⌘Q, menu, or closing the last window): `cx.on_app_quit` calls `Shell::stop_server()`. It closes the server's stdin and waits up to 3 s, then kills it; then it closes the helper's stdin and waits up to 15 s for the VM to stop, then kills it.
 - Closing the last window quits the app (`on_window_closed`).
 - **Restart:** Reload while stopped (or Try again) calls `start_server()` again, which stops the old server first. The computer helper keeps running across server restarts.
 

@@ -1,6 +1,6 @@
 {
   "name": "pidots",
-  "version": "0.1.6",
+  "version": "0.2.1",
   "description": "An implementation of pi as agents in a GPUI-kit shell, native macOS app with WebView.",
   "main": "index.js",
   "directories": {

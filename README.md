@@ -53,7 +53,7 @@ Pidots.app/Contents/MacOS/pidots                    GPUI Kit shell (Rust)
 ├── Resources/node server.mjs                       Node server: API, engine, broker
 │      └── WebView loads http://127.0.0.1:<port>/   React UI (served by the same server)
 └── Resources/computers/pidots-computers            Swift helper: one Linux micro-VM shared by all Dots
-         └── VM: node /opt/pidots/agent.mjs         computer service inside each VM
+         └── VM: node /opt/pidots/agent.mjs         router + one service per Dot user
 ```
 
 | Process          | Source                | Role                                                                                                           |
@@ -61,10 +61,10 @@ Pidots.app/Contents/MacOS/pidots                    GPUI Kit shell (Rust)
 | Shell            | `desktop/src/`        | Window, native toolbar and menu bar, WebView. Starts and stops the other two processes.                        |
 | Server           | `src/server/`         | HTTP API, the Pi engine, provider settings, pages, connections, voice, and the computer broker. Serves the UI. |
 | UI               | `src/client/`         | React app shown in the WebView.                                                                                |
-| Computer helper  | `desktop/computers/`  | Runs VMs with Apple's Containerization framework. Decides nothing about access.                                |
-| Computer service | `src/computer-agent/` | Runs inside each VM: terminal, files, browser.                                                                 |
+| Computer helper  | `desktop/computers/`  | Runs the shared VM with Apple's Containerization framework. Decides nothing about access.                                |
+| Computer service | `src/computer-agent/` | Runs inside the shared VM, one process per Dot user: terminal, files, browser.                                                                 |
 
-**Lifetime rule.** The shell holds each child's **stdin** open. When the shell exits for any reason, including a crash or kill, the pipe closes and both children shut down: the server stops, and the helper stops every VM. Never add a long-lived child process without the same rule.
+**Lifetime rule.** The shell holds each child's **stdin** open. When the shell exits for any reason, including a crash or kill, the pipe closes and both children shut down: the server stops, and the helper stops the VM. Never add a long-lived child process without the same rule.
 
 ## Where things live
 
@@ -120,7 +120,7 @@ src/server/            Node server
   runner.ts, store.ts  scheduled tasks, settings, memories
 src/client/            React UI (useThread.ts, Chat.tsx, ProvidersDialog.tsx, ComputerPanel.tsx, …)
 src/shared/            types shared by server, client and the computer service
-src/computer-agent/    computer service that runs inside each VM
+src/computer-agent/    computer service that runs inside the shared VM (one per Dot user)
 desktop/               macOS app: Rust shell, Swift computer helper, packaging scripts
 tests/                 vitest suites (server, client rendering, engine, computer service)
 ```

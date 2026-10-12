@@ -30,7 +30,7 @@ Inside the VM, the computer service (`src/computer-agent/`) also checks a per-Do
 
 - **One VM for all Dots:** a single sparse disk (`computers/computer/rootfs.ext4`, a copy-on-write clone of the template), 2 vCPUs and 2 GiB by default. It boots on the first computer request, and stops after 15 idle minutes. `computers/settings.json` (`{"cpus": 2, "memoryMiB": 2048, "idleMinutes": 15}`) changes these; the desktop shell passes them to the helper at launch.
 - **Isolation between Dots is Unix users, not kernels:** each Dot is user `dot-<16 hex>` with home `/home/dot-<id>` (0700), its own workspace, Chromium profile, service process, socket and token. A root router in the VM (`router.mjs`) forwards each request to the Dot named in `x-pidots-dot-id`; that Dot's service still checks its own token. Nothing on the Mac is shared except a **read-only** folder with the service code (`/opt/pidots`) and the **shared folders** (below).
-- **Shared folders:** the owner can share any number of folders or files from their Mac with a Dot (Computer panel → **Folders**). Each is mounted **read-write** into that Dot's VM only, at the **same absolute path** (so `/Users/me/project` is `/Users/me/project` inside), and changes are the owner's real files. Paths that would cover system folders in the VM (`/`, `/usr`, `/opt`, `/home`, `/etc`, …; see `reservedComputerPaths`) are refused. The VM mounts the union of every Dot's shared folders at boot; each Dot's service only allows its own (`files.ts`). Adding a folder restarts the VM if no other Dot is using it, otherwise it applies at the next restart and the status says so. **Limit:** shell commands of other Dots can technically read a mounted folder (virtiofs keeps the Mac's ownership), so the per-Dot folder rule is enforced for the file tools, not for `exec`.
+- **Shared folders:** the owner can share any number of folders or files from their Mac with a Dot (Computer panel → **Folders**). Each is mounted **read-write** into the shared VM, at the **same absolute path** (so `/Users/me/project` is `/Users/me/project` inside), and changes are the owner's real files. Paths that would cover system folders in the VM (`/`, `/usr`, `/opt`, `/home`, `/etc`, …; see `reservedComputerPaths`) are refused. The VM mounts the union of every Dot's shared folders at boot; each Dot's service only allows its own (`files.ts`). Adding a folder restarts the VM if no other Dot is using it, otherwise it applies at the next restart and the status says so. **Limit:** shell commands of other Dots can technically read a mounted folder (virtiofs keeps the Mac's ownership), so the per-Dot folder rule is enforced for the file tools, not for `exec`.
 - **Unprivileged:** the Dot's commands and browser run as its own user (no sudo, `/etc/shadow` unreadable). Its workspace is `/home/dot-<id>/workspace`.
 - **Private per Dot:** each Dot has its own home, relay port and token. Other Dots get "Permission denied" on its home.
 - **Network:** the VM has full internet access (vmnet shared NAT) so Dots can browse. **There is no allow-list yet** (see Future work).
@@ -46,7 +46,7 @@ A SwiftPM package (`Package.swift`, Swift 5 language mode, macOS 26) that depend
 | File                          | Responsibility                                                                              |
 | ----------------------------- | ------------------------------------------------------------------------------------------- |
 | `Main.swift`                  | Arguments, secrets, supervisor API routing, and shutdown when stdin closes                  |
-| `Provider.swift`              | The actor that owns VMs: template build, per-Dot disks, boot, stop, delete, readiness probe |
+| `Provider.swift`              | The actor that owns the shared VM: template build, shared disk, Dot users, boot, stop, delete, readiness probe |
 | `HTTPServer.swift`            | Minimal HTTP/1.1 server on 127.0.0.1 (Network.framework); refuses non-loopback peers        |
 | `Relay.swift`                 | Per-computer TCP listener on 127.0.0.1 that forwards to the VM's relayed Unix socket        |
 | `Paths.swift`                 | Data layout, socket folder, Dot-id validation, per-Dot token derivation                     |
@@ -59,7 +59,7 @@ A SwiftPM package (`Package.swift`, Swift 5 language mode, macOS 26) that depend
 pidots-computers --root <data>/computers --kernel <vmlinux> --agent <agent dir> --secrets <secrets.json>
 ```
 
-It prints `PIDOTS_COMPUTERS_PORT=<port>` once listening, logs to stderr (the shell redirects to `computers.log`), and on stdin EOF stops every VM and exits.
+It prints `PIDOTS_COMPUTERS_PORT=<port>` once listening, logs to stderr (the shell redirects to `computers.log`), and on stdin EOF stops the VM and exits.
 
 **Supervisor API** (loopback only; every request needs `Authorization: Bearer <supervisorToken>`; Dot ids must match `^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$`):
 
@@ -69,7 +69,7 @@ It prints `PIDOTS_COMPUTERS_PORT=<port>` once listening, logs to stderr (the she
 | `GET /computers/:id`         | entry                                                                                                                                                                                          |
 | `POST /computers/:id/ensure` | entry. Body `{ mounts?: [{ source, destination }] }` (shared folders for this boot). Starts the computer, creating it first if needed. **Answers at once**; setup continues in the background. |
 | `POST /computers/:id/stop`   | entry (disk kept)                                                                                                                                                                              |
-| `POST /computers/:id/delete` | entry (VM stopped, disk and metadata removed)                                                                                                                                                  |
+| `POST /computers/:id/delete` | entry (that Dot's service stopped and its Linux user and home removed; queued if the VM is off)                                                                                                                                                  |
 
 An entry is `{ botId, container: "pidots-computer-<id>", status, port?, message? }`, where `status` is `stopped`, `preparing` (with a `message` describing progress), `running` (with the relay `port`) or `failed` (with a `message`).
 
@@ -96,9 +96,9 @@ An entry is `{ botId, container: "pidots-computer-<id>", status, port?, message?
 
 **On startup** the provider deletes `store/containers/` and any half-built `templates/building.ext4` left by a crash; a stale folder makes the next boot fail.
 
-### 2. Computer service: `src/computer-agent/` (TypeScript, inside each VM)
+### 2. Computer service: `src/computer-agent/` (TypeScript, inside the shared VM, one process per Dot user)
 
-Bundled by `desktop/scripts/bundle-agent.mjs` into `dist/computer-agent/agent.mjs`, with `node_modules/playwright-core` copied beside it (playwright-core reads its own files at runtime, so it can't be inlined). The folder is about 14 MB and is shared read-only into every VM, so updating Pidots updates the service without touching Dots' disks.
+Bundled by `desktop/scripts/bundle-agent.mjs` into `dist/computer-agent/agent.mjs`, with `node_modules/playwright-core` copied beside it (playwright-core reads its own files at runtime, so it can't be inlined). The folder is about 14 MB and is shared read-only into the VM, so updating Pidots updates the service without touching Dots' disks.
 
 | File         | Responsibility                                                                                                     |
 | ------------ | ------------------------------------------------------------------------------------------------------------------ |
@@ -109,7 +109,7 @@ Bundled by `desktop/scripts/bundle-agent.mjs` into `dist/computer-agent/agent.mj
 | `browser.ts` | `Browser`: Playwright driving `/usr/bin/chromium` with a persistent profile in `~/.pidots/browser`                 |
 | `control.ts` | `Control`: owner takeover state machine                                                                            |
 
-**Authentication:** `Authorization: Bearer <token>` must equal the per-Dot token (constant-time compare), **and** `x-pidots-dot-id` must equal this VM's Dot. Otherwise the response is 401.
+**Authentication:** `Authorization: Bearer <token>` must equal the per-Dot token (constant-time compare), **and** `x-pidots-dot-id` must equal the Dot this service process belongs to. Otherwise the response is 401.
 
 **Routes** (inputs are validated with the shared schemas in `src/shared/computer-types.ts`, the same ones the broker uses):
 
@@ -165,12 +165,12 @@ Routes (`computer-routes.ts`): `GET /api/dots/:id/computer`; `PATCH …/permissi
 
 - `ComputersConfig::discover()` uses the bundle's `Resources/computers/{pidots-computers, vmlinux, agent/}`, or in a checkout `desktop/computers/.build/release/pidots-computers`, `desktop/target/kernel-cache/vmlinux` and `dist/computer-agent/`. If any is missing, computers are simply unavailable.
 - `Computers::spawn()`:
-  - **generates fresh tokens on every launch** (VMs never outlive the helper, so nothing needs to persist);
+  - **generates fresh tokens on every launch** (the VM never outlives the helper, so nothing needs to persist);
   - writes `computers/secrets.json` (0600) for the helper and starts it with stdin piped;
   - reads the port line (15 s timeout);
   - writes `computers/server.json` (0600) `{ url, supervisorToken, computerToken }`.
 - The server starts with `PIDOTS_COMPUTERS_FILE=<server.json>`. `index.ts` reads it on every runtime build (`builtinComputers()`), and `platformConfigFrom()` uses it when Providers & keys → Computers is **Built-in** (the default), with namespace `pidots`. **Custom** keeps the manual supervisor fields for running your own service.
-- `stop()` closes the helper's stdin and waits up to 15 s for the VMs to stop before killing it.
+- `stop()` closes the helper's stdin and waits up to 15 s for the VM to stop before killing it.
 
 ### 5. UI
 
@@ -238,13 +238,13 @@ Measured on an M-series Mac:
 
 ## How to…
 
-- **Change what's installed:** edit `Provider.installScript` and **bump `templateVersion`** (for example `base-v2`). New Dots get the new template. Existing Dots keep their disks; there is no migration yet, so they need Delete and then Start to pick it up.
+- **Change what's installed:** edit `Provider.installScript` and **bump `templateVersion`** (for example `base-v2`). The shared disk is cloned from the template only when it doesn't exist, so there is no migration yet: remove `computers/computer/rootfs.ext4` (with the VM stopped) to pick it up.
 - **Add an action:**
   1. add its schema to `computerInputs` (`src/shared/computer-types.ts`);
   2. add a route in `src/computer-agent/server.ts`;
   3. it's exposed automatically as `computer_<name>` (non-`human_`). Decide whether it's replay-safe in `computer-tools.ts`, and which permission kind it needs in the broker's `action()`;
   4. add tests.
-- **Change VM size:** `config.cpus` and `config.memoryInBytes` in `Provider.start`.
+- **Change VM size:** set `cpus`, `memoryMiB`, `idleMinutes` in `computers/settings.json` (defaults in `Provider.swift` config).
 - **Upgrade the framework:** change `exact: "0.49.0"` **and** `Provider.initImage` to the matching `vminit` tag (they are released together), rebuild, and run the manual integration.
 - **Upgrade the kernel:** update the URL, both SHA-256 values and the extracted file name in `bundle-macos.sh`. The kernel must have VIRTIO drivers built in, 6.14.9 or newer.
 
@@ -260,12 +260,12 @@ Measured on an M-series Mac:
 
 ## Known gaps and future work
 
-- **Network policy:** VMs have unrestricted internet. Apple's `sandboxy` example shows an allow-list proxy on a host-only network.
+- **Network policy:** the VM has unrestricted internet. Apple's `sandboxy` example shows an allow-list proxy on a host-only network.
 - **Disk usage** isn't shown in the panel yet. There's also no app-wide list of all computers, and no per-app access screen for outside apps.
-- **Template upgrades** don't migrate existing Dot disks.
+- **Template upgrades** don't migrate the existing shared disk.
 - **Transport:** the server talks to the helper over loopback TCP with a per-launch token. The design guide recommends a Unix socket authenticated by audit token and code-signing requirement; that would need a Node client that can do that.
 - **App Sandbox** isn't enabled for the app or the helper.
 - The helper binary isn't stripped (≈ 50 MB).
 - **Stale connection file:** `server.json` can be left after a hard kill. It's harmless, because tokens rotate each launch.
-- **Fixed resources:** VM resources are hard-coded (2 vCPUs, 2 GiB), with no per-Dot settings.
+- **Shared kernel:** Dots are isolated by Unix users in one VM, not by separate kernels. Isolated per-Dot VMs are a possible future (B2B) layer.
 - **Apple silicon only.**

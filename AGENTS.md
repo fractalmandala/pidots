@@ -1,6 +1,6 @@
 # Working on Pidots
 
-Pidots is a native macOS app (GPUI Kit shell + WebView) whose Dots run on **Pi** (pi-durable + pi-ai) and can each use a private **Linux micro-VM**. Read these before changing anything:
+Pidots is a native macOS app (GPUI Kit shell + WebView) whose Dots run on **Pi** (pi-durable + pi-ai) and can each use a private Linux user inside **one shared Linux micro-VM**. Read these before changing anything:
 
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md): processes, data locations, source layout, build.
 - [docs/SHELL.md](docs/SHELL.md): the macOS shell (GPUI Kit window, WebView, menus, child processes).
@@ -37,7 +37,7 @@ npm run desktop:dmg                        # release build -> desktop/target/dis
 | Model providers, OpenCode, API types        | `src/server/engine/models.ts`, `src/server/provider-settings.ts`                |
 | Chat API and streaming                      | `src/server/thread-routes.ts`, `src/client/useThread.ts`, `src/client/Chat.tsx` |
 | Computer permissions and audit              | `src/server/computer-service.ts`, `src/server/computer-store.ts`                |
-| What runs inside a VM                       | `src/computer-agent/`                                                           |
-| VM lifecycle                                | `desktop/computers/Sources/PidotsComputers/Provider.swift`                      |
+| What runs inside the VM                     | `src/computer-agent/`                                                           |
+| VM lifecycle                              | `desktop/computers/Sources/PidotsComputers/Provider.swift`                      |
 | Shell, menus, child processes               | `desktop/src/main.rs`, `menus.rs`, `server.rs`, `computers.rs`                  |
 | Packaging                                   | `desktop/scripts/bundle-macos.sh`                                               |
