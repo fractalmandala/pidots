@@ -1,7 +1,7 @@
-// Bundles the computer service that runs inside each Dot's VM.
+// Bundles the computer service and router that run inside the shared VM.
 //   node desktop/scripts/bundle-agent.mjs <outdir>
-// Produces <outdir>/agent.mjs and <outdir>/node_modules/playwright-core,
-// shared read-only into every VM at /opt/pidots.
+// Produces <outdir>/agent.mjs, <outdir>/router.mjs and <outdir>/node_modules/playwright-core,
+// shared read-only into the VM at /opt/pidots.
 import { build } from 'esbuild';
 import { cpSync, mkdirSync, rmSync } from 'node:fs';
 import { createRequire } from 'node:module';
@@ -13,8 +13,13 @@ rmSync(outdir, { recursive: true, force: true });
 mkdirSync(join(outdir, 'node_modules'), { recursive: true });
 
 await build({
-  entryPoints: ['src/computer-agent/main.ts'],
-  outfile: join(outdir, 'agent.mjs'),
+  // agent.mjs: one per Dot, as that Dot's user. router.mjs: one per VM, as root.
+  entryPoints: {
+    agent: 'src/computer-agent/main.ts',
+    router: 'src/computer-agent/router.ts',
+  },
+  outdir,
+  outExtension: { '.js': '.mjs' },
   bundle: true,
   platform: 'node',
   format: 'esm',

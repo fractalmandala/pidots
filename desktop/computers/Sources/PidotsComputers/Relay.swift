@@ -1,15 +1,17 @@
 import Foundation
 import Network
 
-/// Forwards 127.0.0.1:<port> to one computer's service socket on the host.
-/// Each running computer gets its own relay, so a port only ever reaches
-/// that Dot's VM (whose service still checks the Dot's own token).
+/// Forwards 127.0.0.1:<port> to the shared computer's router socket. Each
+/// Dot gets its own port; the router inside the VM sends each request to the
+/// Dot named in `x-pidots-dot-id`, whose own service checks that Dot's token.
 final class Relay: @unchecked Sendable {
     private let listener: NWListener
     private let socketPath: String
     private let queue = DispatchQueue(label: "pidots.relay")
+    private let onActivity: @Sendable () -> Void
 
-    init(socketPath: String) throws {
+    init(socketPath: String, onActivity: @escaping @Sendable () -> Void = {}) throws {
+        self.onActivity = onActivity
         let parameters = NWParameters.tcp
         parameters.requiredLocalEndpoint = .hostPort(host: "127.0.0.1", port: .any)
         listener = try NWListener(using: parameters)
@@ -34,6 +36,7 @@ final class Relay: @unchecked Sendable {
     }
 
     private func bridge(_ inbound: NWConnection) {
+        onActivity()
         let outbound = NWConnection(to: .unix(path: socketPath), using: .tcp)
         inbound.start(queue: queue)
         outbound.start(queue: queue)

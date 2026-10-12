@@ -1,6 +1,9 @@
 import Foundation
 
 /// pidots-computers --root <dir> --kernel <vmlinux> --agent <dir> --secrets <file>
+///                  [--cpus 2] [--memory-mib 2048] [--idle-minutes 15]
+///
+/// Runs the one shared VM every Dot uses (see Provider).
 ///
 /// Prints `PIDOTS_COMPUTERS_PORT=<port>` once listening on 127.0.0.1, then
 /// serves the supervisor API to the Pidots server. Exits, stopping every VM,
@@ -23,7 +26,10 @@ struct PidotsComputers {
             paths: Paths(root: URL(fileURLWithPath: args["root"]!)),
             kernel: URL(fileURLWithPath: args["kernel"]!),
             agent: URL(fileURLWithPath: args["agent"]!),
-            computerSecret: secrets.computerToken
+            computerSecret: secrets.computerToken,
+            cpus: max(1, min(Int(args["cpus"] ?? "") ?? 2, ProcessInfo.processInfo.processorCount)),
+            memoryMiB: max(1024, min(UInt64(args["memory-mib"] ?? "") ?? 2048, 16384)),
+            idleSeconds: max(0, Double(args["idle-minutes"] ?? "") ?? 15) * 60
         ))
         let server = try HTTPServer { request in
             await route(request, provider: provider, token: secrets.supervisorToken)

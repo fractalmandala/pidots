@@ -1,16 +1,20 @@
-//! Runs `pidots-computers`, the helper that gives each Dot a Linux micro-VM.
+//! Runs `pidots-computers`, the helper that runs the one Linux micro-VM all
+//! Dots share (each Dot is its own Linux user inside it).
 //!
 //! Bundle layout:
 //!
 //! ```text
 //! Pidots.app/Contents/Resources/computers/pidots-computers   the helper (virtualization entitlement)
 //! Pidots.app/Contents/Resources/computers/vmlinux            pinned Linux kernel
-//! Pidots.app/Contents/Resources/computers/agent/             service shared into each VM
+//! Pidots.app/Contents/Resources/computers/agent/             service + router shared into the VM
 //! ```
 //!
 //! Fresh tokens are made on every launch: VMs stop with the helper, so nothing
 //! has to outlive the app. The server gets the helper's address and tokens in
 //! a private file, not through settings or the environment.
+//!
+//! VM size and idle timeout come from `<data>/computers/settings.json`, e.g.
+//! `{"cpus": 2, "memoryMiB": 2048, "idleMinutes": 15}` (these are the defaults).
 
 use std::fs::{self, File, OpenOptions};
 use std::io::{BufRead, BufReader, Read, Write};
@@ -59,6 +63,7 @@ impl ComputersConfig {
             config.helper.is_file()
                 && config.kernel.is_file()
                 && config.agent.join("agent.mjs").is_file()
+                && config.agent.join("router.mjs").is_file()
         })
     }
 }
@@ -85,11 +90,13 @@ impl Computers {
         )?;
         let log =
             File::create(folder.join("computers.log")).context("Could not create computers.log")?;
+        let vm = VmSettings::load(&folder.join("settings.json"));
         let mut child = Command::new(&config.helper)
             .args(["--root".as_ref(), folder.as_os_str()])
             .args(["--kernel".as_ref(), config.kernel.as_os_str()])
             .args(["--agent".as_ref(), config.agent.as_os_str()])
             .args(["--secrets".as_ref(), secrets.as_os_str()])
+            .args(vm.args())
             // The helper stops every VM and exits when this pipe closes.
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
@@ -148,6 +155,74 @@ impl Computers {
 impl Drop for Computers {
     fn drop(&mut self) {
         self.stop();
+    }
+}
+
+/// Size and idle timeout of the shared VM. Missing or invalid values fall
+/// back to the defaults (2 vCPUs, 2 GiB, 15 minutes); the helper clamps them.
+#[derive(Debug, PartialEq)]
+pub struct VmSettings {
+    pub cpus: u32,
+    pub memory_mib: u64,
+    pub idle_minutes: u64,
+}
+
+impl Default for VmSettings {
+    fn default() -> Self {
+        Self { cpus: 2, memory_mib: 2048, idle_minutes: 15 }
+    }
+}
+
+impl VmSettings {
+    pub fn load(path: &Path) -> Self {
+        fs::read_to_string(path).map(|text| Self::parse(&text)).unwrap_or_default()
+    }
+
+    pub fn parse(text: &str) -> Self {
+        let mut settings = Self::default();
+        // A flat object of small integers; no JSON crate needed.
+        let get = |key: &str| -> Option<u64> {
+            let rest = &text[text.find(&format!("\"{key}\""))? + key.len() + 2..];
+            let rest = rest.trim_start().strip_prefix(':')?.trim_start();
+            let digits: String = rest.chars().take_while(char::is_ascii_digit).collect();
+            digits.parse().ok()
+        };
+        if let Some(cpus) = get("cpus").filter(|n| (1..=64).contains(n)) {
+            settings.cpus = cpus as u32;
+        }
+        if let Some(mib) = get("memoryMiB").filter(|n| (1024..=65536).contains(n)) {
+            settings.memory_mib = mib;
+        }
+        if let Some(minutes) = get("idleMinutes").filter(|n| *n <= 24 * 60) {
+            settings.idle_minutes = minutes;
+        }
+        settings
+    }
+
+    fn args(&self) -> Vec<String> {
+        vec![
+            "--cpus".into(),
+            self.cpus.to_string(),
+            "--memory-mib".into(),
+            self.memory_mib.to_string(),
+            "--idle-minutes".into(),
+            self.idle_minutes.to_string(),
+        ]
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::VmSettings;
+
+    #[test]
+    fn vm_settings_default_and_override() {
+        assert_eq!(VmSettings::parse(""), VmSettings::default());
+        assert_eq!(
+            VmSettings::parse(r#"{"cpus":4,"memoryMiB":3072,"idleMinutes":5}"#),
+            VmSettings { cpus: 4, memory_mib: 3072, idle_minutes: 5 }
+        );
+        assert_eq!(VmSettings::parse(r#"{"cpus":0,"memoryMiB":10}"#), VmSettings::default());
     }
 }
 

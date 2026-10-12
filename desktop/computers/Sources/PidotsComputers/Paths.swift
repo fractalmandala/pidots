@@ -7,12 +7,13 @@ struct Paths {
 
     var store: URL { root.appendingPathComponent("store") }
     var templates: URL { root.appendingPathComponent("templates") }
-    var dots: URL { root.appendingPathComponent("dots") }
-    var stateFile: URL { root.appendingPathComponent("state.json") }
+    /// The one shared computer: a single sparse disk every Dot lives on.
+    var computer: URL { root.appendingPathComponent("computer") }
+    var disk: URL { computer.appendingPathComponent("rootfs.ext4") }
+    /// Version 2 metadata. The old per-Dot `state.json` and `dots/` are ignored.
+    var stateFile: URL { root.appendingPathComponent("computer-state.json") }
 
     func template(_ version: String) -> URL { templates.appendingPathComponent("\(version).ext4") }
-    func dotDirectory(_ id: String) -> URL { dots.appendingPathComponent(id) }
-    func disk(_ id: String) -> URL { dotDirectory(id).appendingPathComponent("rootfs.ext4") }
     /// The framework's working folder for a container, by its exact name.
     func containerRoot(_ name: String) -> URL {
         store.appendingPathComponent("containers").appendingPathComponent(name)
@@ -42,8 +43,59 @@ struct Paths {
     }
 }
 
-/// The container name the Pidots broker expects for a Dot.
+/// The identity the Pidots broker expects for a Dot's computer. Every Dot now
+/// lives in the one shared VM (`sharedVMName`); this stays per Dot so the
+/// broker's endpoint binding is unchanged.
 func containerName(_ dotId: String) -> String { "pidots-computer-\(dotId)" }
+
+/// The single VM all Dots share.
+let sharedVMName = "pidots-computer"
+
+/// Linux user names are capped at 32 characters and Dot ids are UUIDs, so the
+/// user is `dot-` plus a stable 16-hex digest of the id.
+func linuxUser(_ dotId: String) -> String {
+    "dot-" + SHA256.hash(data: Data(dotId.utf8)).prefix(8).map { String(format: "%02x", $0) }.joined()
+}
+
+/// Each Dot's private home (0700) inside the shared VM.
+func guestHome(_ dotId: String) -> String { "/home/dot-\(dotId)" }
+
+/// The Dot's own service socket inside its home; only root's router reaches it.
+func guestSocket(_ dotId: String) -> String { "\(guestHome(dotId))/.pidots/agent.sock" }
+
+/// Root-run script that creates (idempotently) a Dot's user, home, workspace
+/// and socket folder. `id` must already be validated.
+func ensureUserScript(_ dotId: String) -> String {
+    let user = linuxUser(dotId), home = guestHome(dotId)
+    return """
+        set -eu
+        id -u \(user) >/dev/null 2>&1 || useradd --home-dir \(home) --no-create-home --user-group --shell /bin/bash \(user)
+        mkdir -p \(home)/workspace \(home)/.pidots
+        chown -R \(user):\(user) \(home)
+        chmod 700 \(home) \(home)/.pidots
+        printf '%s %s\\n' "$(id -u \(user))" "$(id -g \(user))"
+        """
+}
+
+/// Root-run script that removes a Dot's user and everything in its home.
+func deleteUserScript(_ dotId: String) -> String {
+    let user = linuxUser(dotId)
+    return "pkill -KILL -u \(user) 2>/dev/null || true; id -u \(user) >/dev/null 2>&1 && userdel --remove \(user) 2>/dev/null || true; rm -rf \(guestHome(dotId))"
+}
+
+/// The shared folders the VM mounts at boot: every Dot's, deduplicated and
+/// parents first so a nested share mounts on top of its parent.
+func mountUnion(_ perDot: [String: [Provider.SharedMount]]) -> [Provider.SharedMount] {
+    var seen = Set<String>()
+    return perDot.values.flatMap { $0 }
+        .filter { seen.insert($0.destination).inserted }
+        .sorted { ($0.destination.count, $0.destination) < ($1.destination.count, $1.destination) }
+}
+
+/// True when every requested share is already mounted in the running VM.
+func mounted(_ requested: [Provider.SharedMount], in current: [Provider.SharedMount]) -> Bool {
+    requested.allSatisfy { current.contains($0) }
+}
 
 /// Dot ids are UUID-like; anything else is refused before touching disk.
 func validDotId(_ id: String) -> Bool {

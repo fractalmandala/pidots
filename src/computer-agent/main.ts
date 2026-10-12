@@ -1,5 +1,6 @@
-// Entry point inside each Dot's VM. The provider starts it as the unprivileged
-// `dot` user and relays its Unix socket to the host.
+// One per Dot inside the shared computer. The provider starts it as that
+// Dot's own Linux user (dot-…, home /home/dot-<id>, 0700), so its workspace
+// and browser profile are private; the root router forwards to its socket.
 import { chmodSync, mkdirSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { Browser } from './browser.js';
