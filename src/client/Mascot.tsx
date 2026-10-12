@@ -8,9 +8,8 @@ export const characters = [
   'red',
   'yellow',
   'lightblue',
-  'green-1',
-  'black',
-  'white',
+  'darkgreen',
+  'candypink',
 ] as const;
 
 /** Stable identity keeps each specialist recognizable across views and reloads. */
